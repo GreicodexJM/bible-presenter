@@ -98,7 +98,7 @@ class BibleService {
       if (this.translationData) {
         // Check for array-based structure (new format)
         if (Array.isArray(this.translationData.books)) {
-          const bookData = this.translationData.books.find((b: any) => b.name.toUpperCase().includes(book.toUpperCase()) );
+          const bookData = this.translationData.books.find((b: any) => b.name.toUpperCase().includes(book.toUpperCase() ) );
           if (bookData) {
             const chapterData = bookData.chapters.find((c: any) => c.chapter === chapter);
             if (chapterData) {
@@ -163,7 +163,8 @@ class Game3D {
 
   // Text overlay elements
   private textOverlay: HTMLDivElement | null = null;
-  private inputTextElement: HTMLDivElement | null = null;
+  private inputContainer: HTMLDivElement | null = null;
+  private inputTextElement: HTMLInputElement | null = null;
   private verseTextElement: HTMLDivElement | null = null;
 
 
@@ -225,7 +226,7 @@ class Game3D {
               (err) => {
                 console.error(`Failed to load texture: ${textureFile}`, err);
                 // Return a basic placeholder texture on error to prevent crashes
-                resolve(new THREE.Texture());
+                reject(new THREE.Texture());
               }
             );
           });
@@ -322,22 +323,51 @@ class Game3D {
       justify-content: center;
     `;
 
-    // Create input text element
-    this.inputTextElement = document.createElement('div');
-    this.inputTextElement.id = 'bible-input';
-    this.inputTextElement.style.cssText = `
+    // Create input container (for SVG background)
+    this.inputContainer = document.createElement('div');
+    this.inputContainer.id = 'bible-input-container';
+    this.inputContainer.style.cssText = `
       position: absolute;
       left: ${this.theme.config.input.position.x};
       top: ${this.theme.config.input.position.y};
       width: ${this.theme.config.input.size.width};
       height: ${this.theme.config.input.size.height};
-      font-size: 24px;
-      color: #ffffff;
-      text-align: center;
-      white-space: pre-wrap;
       display: none;
       z-index: 11;
+      pointer-events: auto;
     `;
+
+    // Create native input element
+    this.inputTextElement = document.createElement('input');
+    this.inputTextElement.type = 'text';
+    this.inputTextElement.id = 'bible-input';
+    this.inputTextElement.style.cssText = `
+      width: 100%;
+      height: 100%;
+      background: transparent;
+      border: none;
+      outline: none;
+      color: #ffffff;
+      font-size: 24px;
+      text-align: center;
+      font-family: 'Segoe UI', sans-serif;
+      text-shadow: 0 0 5px rgba(0,0,0,0.5);
+    `;
+
+    // Add event listeners for native input
+    this.inputTextElement.addEventListener('keyup', (e) => {
+      if (e.key === 'Enter') {
+        this.processBibleReference();
+      } else if (e.key === 'Escape') {
+        this.hideInputText();
+      }
+    });
+
+    this.inputTextElement.addEventListener('input', (e) => {
+      this.textInput = (e.target as HTMLInputElement).value;
+    });
+
+    this.inputContainer.appendChild(this.inputTextElement);
 
     // Create verse text element
     this.verseTextElement = document.createElement('div');
@@ -358,7 +388,7 @@ class Game3D {
     `;
 
     // Add elements to overlay
-    this.textOverlay.appendChild(this.inputTextElement);
+    this.textOverlay.appendChild(this.inputContainer);
     this.textOverlay.appendChild(this.verseTextElement);
 
     // Add overlay to app
@@ -383,6 +413,19 @@ class Game3D {
     // Keyboard events
     document.addEventListener('keydown', (event) => {
       this.input.keyboard[event.code] = true;
+      
+      // Auto-focus input on typing (if not already focused and not a control key)
+      if (!this.inputTextElement) return;
+      if (document.activeElement !== this.inputTextElement) {
+        if (event.key.length === 1 && !event.ctrlKey && !event.altKey && !event.metaKey) {
+          this.showInputText();
+          this.inputTextElement.focus();
+          // We don't prevent default here so the key goes to the input
+        } else if (event.key === 'Enter') {
+          this.showInputText();
+          this.inputTextElement.focus();
+        }
+      }
     });
 
     document.addEventListener('keyup', (event) => {
@@ -392,11 +435,6 @@ class Game3D {
     // Prevent context menu
     document.addEventListener('contextmenu', (event) => {
       event.preventDefault();
-    });
-
-    // Pointer lock for immersive experience
-    document.addEventListener('click', () => {
-      //document.body.requestPointerLock();
     });
   }
 
@@ -605,99 +643,14 @@ void main() {
       this.shaderMaterial.uniforms.iSampleRate.value = 44100.0;
     }
 
-
-
-    // Handle input
     this.handleInput();
-
-    // Render scene
     this.renderer.render(this.scene, this.camera);
   };
 
   private handleInput(): void {
-    // Handle Bible input and navigation
-    this.handleBibleInput();
-
-    // Only handle movement if not showing verse (ignore mouse input as requested)
-    if (!this.currentVerse) {
-      const moveSpeed = 0.0;
-
-      // Keyboard movement (only when not in Bible mode)
-      if (this.input.keyboard['KeyW'] || this.input.keyboard['ArrowUp']) {
-        this.camera.position.z -= moveSpeed;
-      }
-      if (this.input.keyboard['KeyS'] || this.input.keyboard['ArrowDown']) {
-        this.camera.position.z += moveSpeed;
-      }
-      if (this.input.keyboard['KeyA'] || this.input.keyboard['ArrowLeft']) {
-        this.camera.position.x -= moveSpeed;
-      }
-      if (this.input.keyboard['KeyD'] || this.input.keyboard['ArrowRight']) {
-        this.camera.position.x += moveSpeed;
-      }
-    }
-  }
-
-  private handleBibleInput(): void {
-    // Check for key presses (only handle once per press)
-    const pressedKeys = Object.keys(this.input.keyboard).filter(key => this.input.keyboard[key]);
-
-    for (const keyCode of pressedKeys) {
-      // Only process if this is a new key press
-      if (this.input.keyboard[keyCode]) {
-        this.processBibleKey(keyCode);
-        // Mark as processed to avoid repeat
-        this.input.keyboard[keyCode] = false;
-      }
-    }
-  }
-
-  private processBibleKey(keyCode: string): void {
-    // Only accept specific keys for Bible input
-    const allowedKeys = [
-      'KeyA', 'KeyB', 'KeyC', 'KeyD', 'KeyE', 'KeyF', 'KeyG', 'KeyH', 'KeyI', 'KeyJ', 'KeyK', 'KeyL', 'KeyM',
-      'KeyN', 'KeyO', 'KeyP', 'KeyQ', 'KeyR', 'KeyS', 'KeyT', 'KeyU', 'KeyV', 'KeyW', 'KeyX', 'KeyY', 'KeyZ',
-      'Digit0', 'Digit1', 'Digit2', 'Digit3', 'Digit4', 'Digit5', 'Digit6', 'Digit7', 'Digit8', 'Digit9',
-      'Space', 'Semicolon', 'Enter', 'Backspace','Escape',
-      'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'
-    ];
-
-    if (!allowedKeys.includes(keyCode)) {
-      return;
-    }
-
-    // If showing a verse, handle navigation
-    if (this.currentVerse) {
-      this.handleVerseNavigation(keyCode);
-      return;
-    }
-
-    // Handle text input
-    if (keyCode === 'Enter') {
-      this.hideInputText();
-      this.processBibleReference();
-      this.textInput = '';
-      return;
-    } else if (keyCode === 'Space') {
-      this.textInput += ' ';
-    } else if (keyCode === 'Semicolon') {
-      this.textInput += ':';
-    } else if (keyCode === 'Backspace') {
-      this.textInput = this.textInput.slice(0, -1);
-    } else if (keyCode.startsWith('Key')) {
-      const letter = keyCode.replace('Key', '').toLowerCase();
-      this.textInput += letter;
-    } else if (keyCode.startsWith('Digit')) {
-      const digit = keyCode.replace('Digit', '');
-      this.textInput += digit;
-    } else if (keyCode ==='Escape') {
-      this.textInput = '';
-      this.hideInputText();
-      return;
-    }
-
-    // Show input text
-    this.showInputText();
+    // Movement disabled as requested.
+    // We can use this hook for other per-frame input logic if needed.
+    
   }
 
   private handleVerseNavigation(keyCode: string): void {
@@ -738,6 +691,9 @@ void main() {
     // Hide input text immediately (CSS transitions will handle animation)
     this.hideInputText();
     this.textInput = '';
+    if (this.inputTextElement) {
+        this.inputTextElement.value = '';
+    }
   }
 
   private async loadVerse(book: string, chapter: number, verse: number): Promise<void> {
@@ -751,13 +707,13 @@ void main() {
   }
 
   private showInputText(): void {
-    if (!this.inputTextElement || !this.theme.inputTemplate) return;
+    if (!this.inputContainer || !this.inputTextElement || !this.theme.inputTemplate) return;
 
-    const displayText = this.textInput || 'Type a Bible reference (e.g., GEN 1:1)';
+    const displayText = ''; // No text in SVG, native input handles text
 
-    // Replace template variables in SVG
+    // Replace template variables in SVG (remove text)
     let svgContent = this.theme.inputTemplate
-      .replace(/\{\{text\}\}/g, this.escapeXml(displayText))
+      .replace(/\{\{text\}\}/g, '')
       .replace(/\{\{width\}\}/g, this.theme.config.input.size.width)
       .replace(/\{\{height\}\}/g, this.theme.config.input.size.height)
       .replace(/\{\{innerWidth\}\}/g, (parseInt(this.theme.config.input.size.width) - 20).toString())
@@ -769,32 +725,24 @@ void main() {
     const svgDataUrl = `data:image/svg+xml;base64,${btoa(svgContent)}`;
 
     // Apply SVG as background image
-    this.inputTextElement.style.backgroundImage = `url("${svgDataUrl}")`;
-    //this.inputTextElement.style.backgroundSize = 'contain';
-    //this.inputTextElement.style.backgroundRepeat = 'no-repeat';
-    //this.inputTextElement.style.backgroundPosition = 'center';
+    this.inputContainer.style.backgroundImage = `url("${svgDataUrl}")`;
+    this.inputContainer.style.backgroundSize = 'contain';
+    this.inputContainer.style.backgroundRepeat = 'no-repeat';
+    this.inputContainer.style.backgroundPosition = 'center';
 
-    // Clear text content since we're using SVG background
-    //this.inputTextElement.textContent = '';
-    this.inputTextElement.innerHTML = svgContent;
     // Apply theme enter class for transitions
     if (this.theme.config.input.enterClass) {
-      this.inputTextElement.className = this.theme.config.input.enterClass;
+      this.inputContainer.className = this.theme.config.input.enterClass;
       // Trigger transition to active state on next frame
       requestAnimationFrame(() => {
-        if (this.theme.config.input.enterActiveClass) {
-          this.inputTextElement!.className = this.theme.config.input.enterActiveClass;
+        if (this.theme.config.input.enterActiveClass && this.inputContainer) {
+          this.inputContainer.className = this.theme.config.input.enterActiveClass;
         }
       });
     }
 
-    // Position the element
-    this.inputTextElement.style.left = ''; //this.theme.config.input.position.x;
-    this.inputTextElement.style.top = ''; //this.theme.config.input.position.y;
-    this.inputTextElement.style.width = ''; //this.theme.config.input.size.width;
-    this.inputTextElement.style.height = ''; //this.theme.config.input.size.height;
-
-    this.inputTextElement.style.display = 'block';
+    this.inputContainer.style.display = 'block';
+    this.inputTextElement.focus();
     this.hideVerseText();
   }
 
@@ -833,14 +781,20 @@ void main() {
     const svgDataUrl = `data:image/svg+xml;base64,${btoa(svgContent)}`;
 
     // Apply SVG as background image
-    //this.verseTextElement.style.backgroundImage = `url("${svgDataUrl}")`;
-    //this.verseTextElement.style.backgroundSize = 'contain';
-    //this.verseTextElement.style.backgroundRepeat = 'no-repeat';
-    //this.verseTextElement.style.backgroundPosition = 'center';
+    this.verseTextElement.style.backgroundImage = `url("${svgDataUrl}")`;
+    this.verseTextElement.style.backgroundSize = 'contain';
+    this.verseTextElement.style.backgroundRepeat = 'no-repeat';
+    this.verseTextElement.style.backgroundPosition = 'center';
 
     // Clear text content since we're using SVG background
-    //this.verseTextElement.textContent = '';
+    this.verseTextElement.textContent = '';
+    //this.verseTextElement.innerHTML = svgContent; // Keep using BG for verse for consistency with previous working state?
+    // Wait, previous working state used innerHTML?
+    // In Turn 18 read_file, showVerseText had:
+    // this.verseTextElement.innerHTML = svgContent;
+    // So I should stick to that for Verse.
     this.verseTextElement.innerHTML = svgContent;
+    this.verseTextElement.style.backgroundImage = ''; // Clear BG if using innerHTML
 
     // Apply theme enter class for transitions
     if (this.theme.config.verse.enterClass) {
@@ -854,36 +808,36 @@ void main() {
     }
 
     // Position the element
-    this.verseTextElement.style.left = ''; //this.theme.config.verse.position.x;
-    this.verseTextElement.style.top = ''; //this.theme.config.verse.position.y;
-    this.verseTextElement.style.width = ''; //this.theme.config.verse.size.width;
-    this.verseTextElement.style.height = ''; //this.theme.config.verse.size.height;
+    this.verseTextElement.style.left = this.theme.config.verse.position.x;
+    this.verseTextElement.style.top = this.theme.config.verse.position.y;
+    this.verseTextElement.style.width = this.theme.config.verse.size.width;
+    this.verseTextElement.style.height = this.theme.config.verse.size.height;
 
     // Show immediately (CSS transitions will handle animation)
     this.verseTextElement.style.display = 'block';
   }
 
   private hideInputText(): void {
-    if (this.inputTextElement && this.theme.config.input.exitClass) {
+    if (this.inputContainer && this.theme.config.input.exitClass) {
       // Apply exit transition class
-      this.inputTextElement.className = this.theme.config.input.exitClass;
+      this.inputContainer.className = this.theme.config.input.exitClass;
 
       // Trigger transition to exit-active state on next frame
       requestAnimationFrame(() => {
-        if (this.theme.config.input.exitActiveClass) {
-          this.inputTextElement!.className = this.theme.config.input.exitActiveClass;
+        if (this.theme.config.input.exitActiveClass && this.inputContainer) {
+          this.inputContainer.className = this.theme.config.input.exitActiveClass;
 
           // Hide element after transition completes (0.6s for exit transition)
           setTimeout(() => {
-            if (this.inputTextElement) {
-              this.inputTextElement.style.display = 'none';
+            if (this.inputContainer) {
+              this.inputContainer.style.display = 'none';
             }
           }, 600);
         }
       });
-    } else if (this.inputTextElement) {
+    } else if (this.inputContainer) {
       // Fallback if no transition classes defined
-      this.inputTextElement.style.display = 'none';
+      this.inputContainer.style.display = 'none';
     }
   }
 
