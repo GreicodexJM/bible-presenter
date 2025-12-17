@@ -21,11 +21,11 @@ export class BibleService {
               const verseData = chapterData.verses.find((v: any) => v.verse === verse);
               if (verseData) {
                 return {
-                  reference: `${bookData.name} ${chapter}:${verse}`,
+                  reference: `${bookData.name} ${chapterData}:${verseData}`,
                   verses: [{
-                    book: book.toUpperCase(),
-                    chapter: chapter,
-                    verse: verse,
+                    book: bookData.name,
+                    chapter: chapterData.chapter,
+                    verse: verseData.verse,
                     text: verseData.text
                   }],
                   text: verseData.text,
