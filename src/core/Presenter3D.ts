@@ -555,27 +555,25 @@ void main() {
     if (!this.currentVerse || this.currentVerse.verses.length === 0) return;
 
     const currentVerse = this.currentVerse.verses[0];
-    let newBook = currentVerse.book;
-    let newChapter = currentVerse.chapter;
-    let newVerse = currentVerse.verse;
+    let currentVerseIdx = this.bibleService.getVerseIndex(currentVerse);
 
     switch (keyCode) {
       case 'ArrowRight':
       case 'ArrowDown':
-        newVerse++;
+        currentVerseIdx++;
         break;
       case 'ArrowLeft':
       case 'ArrowUp':
-        newVerse--;
+        currentVerseIdx--;
         break;
     }
 
     // Hide current verse with exit transition, then load new verse
     await this.hideVerseText();
     this.currentVerse = null;
-
+    let newVerse = this.bibleService.getIndexVerse(currentVerseIdx);
     // Load new verse after exit transition completes (0.8s)
-    await this.loadVerse(newBook, newChapter, newVerse);
+    await this.loadVerse(newVerse.book, newVerse.chapter, newVerse.verse);
   }
 
   private async processBibleReference(): Promise<void> {
