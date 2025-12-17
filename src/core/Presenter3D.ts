@@ -303,12 +303,12 @@ export class Presenter3D {
     // Keyboard events
     document.addEventListener('keydown', (event) => {
       this.input.keyboard[event.code] = true;
-      
+
       // Handle Verse Navigation
       if (this.currentVerse) {
         if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(event.key)) {
-           this.handleVerseNavigation(event.key);
-           return;
+          this.handleVerseNavigation(event.key);
+          return;
         }
       }
 
@@ -548,7 +548,7 @@ void main() {
   private handleInput(): void {
     // Movement disabled as requested.
     // We can use this hook for other per-frame input logic if needed.
-    
+
   }
 
   private handleVerseNavigation(keyCode: string): void {
@@ -590,21 +590,22 @@ void main() {
     this.hideInputText();
     this.textInput = '';
     if (this.inputTextElement) {
-        this.inputTextElement.value = '';
+      this.inputTextElement.value = '';
     }
   }
 
   private async loadVerse(book: string, chapter: number, verse: number): Promise<void> {
-    await this.hideVerseText();
+
     const verseData = await this.bibleService.getVerse(book, chapter, verse);
-    
+
     if (verseData) {
       this.currentVerse = verseData;
-      await this.showVerseText();
+      return await this.showVerseText();
     }
+    return await this.hideVerseText();
   }
 
-  private showInputText(): void {
+  private async showInputText(): Promise<void> {
     if (!this.inputContainer || !this.inputTextElement || !this.theme.inputTemplate) return;
 
     // const displayText = ''; // No text in SVG, native input handles text
@@ -627,7 +628,7 @@ void main() {
     this.hideVerseText();
 
     // Apply theme enter transition
-    this.applyTransition(this.inputContainer, this.theme.config.input.enterClass, this.theme.config.input.enterActiveClass, true);
+    return await this.applyTransition(this.inputContainer, this.theme.config.input.enterClass, this.theme.config.input.enterActiveClass, true);
   }
 
 
@@ -638,39 +639,43 @@ void main() {
    * @param initialClass The initial CSS class to apply
    * @param activeClass The active CSS class to add after initial class
    * @param isShow Whether this is a show transition (true) or hide transition (false)
+   * @returns Promise that resolves when the transition completes
    */
-  private async applyTransition(element: HTMLElement | null, initialClass?: string, activeClass?: string, isShow: boolean = true): void {
-    if (!element || !initialClass) {
-      // Fallback if no transition classes defined
-      if (!isShow && element) {
-        element.style.display = 'none';
-      }
-      return;
-    }
-
-    // Apply initial class
-    element.className = initialClass;
-
-    // Add active class on next frame for smooth transition
-    requestAnimationFrame(() => {
-      requestAnimationFrame(() => {
-        if (activeClass && element) {
-          element.classList.add(activeClass);
-        }
-      });
-    });
-
-    // For hide transitions, hide element after animation completes
-    if (!isShow) {
-      setTimeout(() => {
-        if (element) {
+  private applyTransition(element: HTMLElement | null, initialClass?: string, activeClass?: string, isShow: boolean = true): Promise<void> {
+    return new Promise((resolve) => {
+      if (!element || !initialClass) {
+        // Fallback if no transition classes defined
+        if (!isShow && element) {
           element.style.display = 'none';
         }
+        resolve(); // Resolve immediately
+        return;
+      }
+
+      // Apply initial class
+      element.className = initialClass;
+
+      // Add active class on next frame for smooth transition
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          if (activeClass && element) {
+            element.classList.add(activeClass);
+          }
+        });
+      });
+
+      // Resolve after transition completes
+      setTimeout(() => {
+        // For hide transitions, hide element after animation completes
+        if (!isShow && element) {
+          element.style.display = 'none';
+        }
+        resolve();
       }, this.theme.config.transitions.animDuration);
-    }
+    });
   }
 
-  private showVerseText(): void {
+  private async showVerseText(): Promise<void> {
     if (!this.currentVerse || !this.verseContainer || !this.verseTextElement || !this.theme.verseTemplate) return;
 
     const reference = this.currentVerse.reference;
@@ -698,7 +703,7 @@ void main() {
     this.verseTextElement.style.display = 'block';
 
     // Apply theme enter transition to container
-    this.applyTransition(this.verseContainer, this.theme.config.verse.enterClass, this.theme.config.verse.enterActiveClass, true);
+    const p = await this.applyTransition(this.verseContainer, this.theme.config.verse.enterClass, this.theme.config.verse.enterActiveClass, true);
 
     // Position both elements
     const position = this.theme.config.verse.position;
@@ -713,23 +718,25 @@ void main() {
     this.verseTextElement.style.top = position.y;
     this.verseTextElement.style.width = size.width;
     this.verseTextElement.style.height = size.height;
+    return p;
   }
 
-  private hideInputText(): void {
+  private async hideInputText(): Promise<void> {
     // Apply theme exit transition
-    this.applyTransition(this.inputContainer, this.theme.config.input.exitClass, this.theme.config.input.exitActiveClass, false);
+    return await this.applyTransition(this.inputContainer, this.theme.config.input.exitClass, this.theme.config.input.exitActiveClass, false);
   }
 
 
-  private hideVerseText(): void {
+  private async hideVerseText(): Promise<void> {
     this.currentVerse = null;
     // Apply theme exit transition to container
-    this.applyTransition(this.verseContainer, this.theme.config.verse.exitClass, this.theme.config.verse.exitActiveClass, false);
+    const ret = await this.applyTransition(this.verseContainer, this.theme.config.verse.exitClass, this.theme.config.verse.exitActiveClass, false);
 
     // Also hide the text element immediately (no transition needed for text)
     if (this.verseTextElement) {
       this.verseTextElement.style.display = 'none';
     }
+    return ret;
   }
 
   public dispose(): void {

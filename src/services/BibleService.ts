@@ -14,14 +14,14 @@ export class BibleService {
       if (this.translationData) {
         // Check for array-based structure (new format)
         if (Array.isArray(this.translationData.books)) {
-          const bookData = this.translationData.books.find((b: any) => b.name.toUpperCase().includes(book.toUpperCase()) );
+          const bookData = this.translationData.books.find((b: any) => b.name.toUpperCase().startsWith(book.toUpperCase()) );
           if (bookData) {
             const chapterData = bookData.chapters.find((c: any) => c.chapter === chapter);
             if (chapterData) {
               const verseData = chapterData.verses.find((v: any) => v.verse === verse);
               if (verseData) {
                 return {
-                  reference: `${book.toUpperCase()} ${chapter}:${verse}`,
+                  reference: `${bookData.name} ${chapter}:${verse}`,
                   verses: [{
                     book: book.toUpperCase(),
                     chapter: chapter,
