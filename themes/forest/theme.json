@@ -12,16 +12,22 @@
     "animationClass": "fade-in"
   },
   "input": {
-    "template": "input.svg",
+    "backgroundImage": "input.svg",
     "position": { "x": "50%", "y": "40%" },
     "size": { "width": "60%", "height": "10%" },
-    "animationClass": "slide-up"
+    "enterClass": "slide-enter",
+    "enterActiveClass": "slide-enter-active",
+    "exitClass": "slide-exit",
+    "exitActiveClass": "slide-exit-active"
   },
   "verse": {
-    "template": "verse.svg",
+    "backgroundImage": "verse.svg",
     "position": { "x": "50%", "y": "60%" },
     "size": { "width": "80%", "height": "30%" },
-    "animationClass": "fade-in-scale"
+    "enterClass": "fade-enter",
+    "enterActiveClass": "fade-enter-active",
+    "exitClass": "fade-exit",
+    "exitActiveClass": "fade-exit-active"
   },
   "transitions": {
     "fadeDuration": 500,

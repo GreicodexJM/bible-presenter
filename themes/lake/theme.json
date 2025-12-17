@@ -12,16 +12,22 @@
     "animationClass": "water-ripple"
   },
   "input": {
-    "template": "input.svg",
+    "backgroundImage": "input.svg",
     "position": { "x": "50%", "y": "35%" },
     "size": { "width": "60%", "height": "10%" },
-    "animationClass": "float-up"
+    "enterClass": "float-enter",
+    "enterActiveClass": "float-enter-active",
+    "exitClass": "float-exit",
+    "exitActiveClass": "float-exit-active"
   },
   "verse": {
-    "template": "verse.svg",
+    "backgroundImage": "verse.svg",
     "position": { "x": "50%", "y": "65%" },
     "size": { "width": "80%", "height": "30%" },
-    "animationClass": "water-surface"
+    "enterClass": "water-enter",
+    "enterActiveClass": "water-enter-active",
+    "exitClass": "water-exit",
+    "exitActiveClass": "water-exit-active"
   },
   "transitions": {
     "fadeDuration": 800,

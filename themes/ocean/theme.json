@@ -12,7 +12,7 @@
     "animationClass": "wave-motion"
   },
   "input": {
-    "template": "input.svg",
+    "backgroundImage": "input.svg",
     "position": { "x": "50%", "y": "35%" },
     "size": { "width": "60%", "height": "10%" },
     "enterClass": "tide-enter",
@@ -21,7 +21,7 @@
     "exitActiveClass": "tide-exit-active"
   },
   "verse": {
-    "template": "verse.svg",
+    "backgroundImage": "verse.svg",
     "position": { "x": "50%", "y": "65%" },
     "size": { "width": "80%", "height": "30%" },
     "enterClass": "surge-enter",

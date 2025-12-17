@@ -14,7 +14,7 @@
     "animationClass": "atmospheric-flow"
   },
   "input": {
-    "template": "input.svg",
+    "backgroundImage": "input.svg",
     "position": { "x": "50%", "y": "35%" },
     "size": { "width": "60%", "height": "10%" },
     "enterClass": "input-enter",
@@ -23,7 +23,7 @@
     "exitActiveClass": "input-exit-active"
   },
   "verse": {
-    "template": "verse.svg",
+    "backgroundImage": "verse.svg",
     "position": { "x": "50%", "y": "65%" },
     "size": { "width": "80%", "height": "30%" },
     "enterClass": "verse-enter",

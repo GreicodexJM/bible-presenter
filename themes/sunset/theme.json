@@ -12,7 +12,7 @@
     "animationClass": "sunset-motion"
   },
   "input": {
-    "template": "input.svg",
+    "backgroundImage": "input.svg",
     "position": { "x": "auto", "y": "35%" },
     "size": { "width": "60%", "height": "10%" },
     "enterClass": "fade-enter",
@@ -21,7 +21,7 @@
     "exitActiveClass": "fade-exit-active"
   },
   "verse": {
-    "template": "verse.svg",
+    "backgroundImage": "verse.svg",
     "position": { "x": "auto", "y": "65%" },
     "size": { "width": "80%", "height": "30%" },
     "enterClass": "fade-enter",
