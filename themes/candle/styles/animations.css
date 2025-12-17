@@ -1,0 +1,47 @@
+/* Candle-themed transition classes */
+
+.candle-motion {
+  animation: candleFlicker 6s infinite ease-in-out;
+}
+
+/* Input field transitions */
+.glow-enter {
+  opacity: 0;
+  filter: blur(8px);
+  transition: all 1s ease-out;
+}
+
+.glow-enter-active {
+  opacity: 1;
+  filter: blur(0px);
+}
+
+.glow-exit {
+  opacity: 1;
+  filter: blur(0px);
+  transition: all 0.8s ease-in;
+}
+
+.glow-exit-active {
+  opacity: 0;
+  filter: blur(8px);
+}
+
+@keyframes candleFlicker {
+  0%, 100% {
+    opacity: 1;
+    filter: brightness(1);
+  }
+  25% {
+    opacity: 0.95;
+    filter: brightness(1.05);
+  }
+  50% {
+    opacity: 0.98;
+    filter: brightness(0.95);
+  }
+  75% {
+    opacity: 0.96;
+    filter: brightness(1.02);
+  }
+}

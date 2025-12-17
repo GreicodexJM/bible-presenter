@@ -2,33 +2,32 @@
   <defs>
     <style>
       .input-background {
-        fill: rgba(10, 20, 40, 0.8);
-        stroke: #87ceeb;
+        fill: rgba(40, 30, 20, 0.7);
+        stroke: #ffecb3;
         stroke-width: 2;
-        rx: 12;
-        filter: drop-shadow(0 14px 12px rgba(135, 206, 235, 0.4));
+        rx: 15;
+        filter: drop-shadow(0 0 10px rgba(255, 236, 179, 0.3));
       }
       .input-text {
-        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        font-family: 'Segoe UI', sans-serif;
         font-size: 24px;
-        fill: #e6f3ff;
+        fill: #fff8e1;
         text-anchor: middle;
         dominant-baseline: middle;
-        text-shadow: 0 2px 4px rgba(0, 0, 0, 0.6);
         font-weight: 300;
+        letter-spacing: 1px;
       }
-      .wind-lines {
-        stroke: rgba(135, 206, 235, 0.3);
-        stroke-width: 1;
+      .wax-lines {
+        stroke: rgba(255, 248, 225, 0.2);
+        stroke-width: 1.5;
         fill: none;
       }
     </style>
   </defs>
 
-  <!-- Wind flow lines -->
-  <path d="M 15 25 Q 50 20 85 25" class="wind-lines"/>
-  <path d="M 15 35 Q 60 30 85 35" class="wind-lines"/>
-  <path d="M 15 45 Q 45 40 85 45" class="wind-lines"/>
+  <!-- Decorative wax lines -->
+  <path d="M 20 65 Q 40 55 60 65 T 100 65" class="wax-lines"/>
+  <path d="M 120 65 Q 140 55 160 65 T 200 65" class="wax-lines"/>
 
   <!-- Main background -->
   <rect x="10" y="10" width="{{innerWidth}}" height="{{innerHeight}}" class="input-background"/>

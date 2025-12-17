@@ -1,0 +1,51 @@
+<svg width="{{width}}" height="{{height}}" viewBox="0 0 {{width}} {{height}}" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <style>
+      .verse-background {
+        fill: rgba(60, 0, 0, 0.85);
+        stroke: #ff9800;
+        stroke-width: 2;
+        rx: 20;
+        filter: drop-shadow(0 0 15px rgba(255, 152, 0, 0.5));
+      }
+      .verse-text {
+        font-family: 'Segoe UI', sans-serif;
+        font-size: 26px;
+        fill: #fff3e0;
+        text-anchor: middle;
+        dominant-baseline: middle;
+        font-weight: 300;
+        line-height: 1.4;
+      }
+      .verse-reference {
+        font-family: 'Segoe UI', sans-serif;
+        font-size: 22px;
+        font-weight: 500;
+        fill: #ffcc80;
+        text-anchor: middle;
+        dominant-baseline: middle;
+      }
+      .ember-decoration {
+        fill: rgba(255, 167, 38, 0.4);
+        stroke: none;
+        filter: blur(1px);
+      }
+    </style>
+  </defs>
+
+  <!-- Decorative embers -->
+  <circle cx="40" cy="180" r="4" class="ember-decoration"/>
+  <circle cx="60" cy="160" r="3" class="ember-decoration"/>
+  <circle cx="50" cy="140" r="2" class="ember-decoration"/>
+  <circle cx="950" cy="40" r="4" class="ember-decoration"/>
+  <circle cx="930" cy="70" r="3" class="ember-decoration"/>
+
+  <!-- Main background -->
+  <rect x="20" y="20" width="{{innerWidth}}" height="{{innerHeight}}" class="verse-background"/>
+
+  <!-- Reference -->
+  <text x="{{centerX}}" y="{{referenceY}}" class="verse-reference">{{reference}}</text>
+
+  <!-- Verse Text -->
+  <text x="{{centerX}}" y="{{textY}}" class="verse-text">{{text}}</text>
+</svg>

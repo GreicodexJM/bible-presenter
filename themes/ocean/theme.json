@@ -1,38 +1,36 @@
 {
-  "name": "Jet Stream",
+  "name": "Ocean",
   "background": {
     "type": "shader",
-    "vertexShader": "jetstream.vert",
-    "fragmentShader": "jetstream.frag",
+    "vertexShader": "ocean.vert",
+    "fragmentShader": "ocean.frag",
     "uniforms": {
       "time": { "type": "float", "value": 0.0 },
       "resolution": { "type": "vec2", "value": [1920, 1080] }
     },
-    "textures": [
-      "Noise.png"
-    ],
-    "animationClass": "atmospheric-flow"
+    "textures": [],
+    "animationClass": "wave-motion"
   },
   "input": {
     "template": "input.svg",
     "position": { "x": "50%", "y": "35%" },
     "size": { "width": "600px", "height": "80px" },
-    "enterClass": "input-enter",
-    "enterActiveClass": "input-enter-active",
-    "exitClass": "input-exit",
-    "exitActiveClass": "input-exit-active"
+    "enterClass": "tide-enter",
+    "enterActiveClass": "tide-enter-active",
+    "exitClass": "tide-exit",
+    "exitActiveClass": "tide-exit-active"
   },
   "verse": {
     "template": "verse.svg",
     "position": { "x": "50%", "y": "65%" },
     "size": { "width": "800px", "height": "200px" },
-    "enterClass": "verse-enter",
-    "enterActiveClass": "verse-enter-active",
-    "exitClass": "verse-exit",
-    "exitActiveClass": "verse-exit-active"
+    "enterClass": "surge-enter",
+    "enterActiveClass": "surge-enter-active",
+    "exitClass": "surge-exit",
+    "exitActiveClass": "surge-exit-active"
   },
   "transitions": {
-    "fadeDuration": 1000,
+    "fadeDuration": 1200,
     "easing": "ease-in-out"
   }
 }

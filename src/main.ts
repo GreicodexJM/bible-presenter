@@ -22,13 +22,19 @@ interface ThemeConfig {
     template: string;
     position: { x: string; y: string };
     size: { width: string; height: string };
-    animationClass?: string;
+    enterClass?: string;
+    enterActiveClass?: string;
+    exitClass?: string;
+    exitActiveClass?: string;
   };
   verse: {
     template: string;
     position: { x: string; y: string };
     size: { width: string; height: string };
-    animationClass?: string;
+    enterClass?: string;
+    enterActiveClass?: string;
+    exitClass?: string;
+    exitActiveClass?: string;
   };
   transitions: {
     fadeDuration: number;
@@ -43,6 +49,7 @@ interface Theme {
     vertex: string;
     fragment: string;
   };
+  loadedTextures?: THREE.Texture[];
   inputTemplate?: string;
   verseTemplate?: string;
   styles?: string;
@@ -79,7 +86,6 @@ interface InputState {
 
 // Bible service
 class BibleService {
-  private baseUrl = 'https://bible.helloao.org/api';
   private translationData: any = null;
 
   loadTranslation(data: any): void {
@@ -88,34 +94,29 @@ class BibleService {
 
   async getVerse(book: string, chapter: number, verse: number): Promise<BibleAPIResponse | null> {
     // Try local data first
-    if (this.translationData) {
-      const bookData = this.translationData.books[book.toUpperCase()];
-      if (bookData && bookData.chapters[chapter] && bookData.chapters[chapter][verse]) {
-        return {
-          reference: `${book.toUpperCase()} ${chapter}:${verse}`,
-          verses: [{
-            book: book.toUpperCase(),
-            chapter: chapter,
-            verse: verse,
-            text: bookData.chapters[chapter][verse]
-          }],
-          text: bookData.chapters[chapter][verse],
-          translation_id: this.translationData.metadata.abbreviation,
-          translation_name: this.translationData.metadata.name,
-          translation_note: this.translationData.metadata.description
-        };
-      }
-    }
-
-    // Fallback to API
     try {
-      const response = await fetch(`${this.baseUrl}/${book}/${chapter}/${verse}`);
-      if (!response.ok) return null;
-      return await response.json();
+      if (this.translationData) {
+        const bookData = this.translationData.books[book.toUpperCase()];
+        if (bookData && bookData.chapters[chapter] && bookData.chapters[chapter][verse]) {
+          return {
+            reference: `${book.toUpperCase()} ${chapter}:${verse}`,
+            verses: [{
+              book: book.toUpperCase(),
+              chapter: chapter,
+              verse: verse,
+              text: bookData.chapters[chapter][verse]
+            }],
+            text: bookData.chapters[chapter][verse],
+            translation_id: this.translationData.metadata.abbreviation,
+            translation_name: this.translationData.metadata.name,
+            translation_note: this.translationData.metadata.description
+          };
+        }
+      }
     } catch (error) {
-      console.error('Bible API error:', error);
-      return null;
+      console.error('Bible API error:',error);
     }
+    return null;
   }
 
   parseReference(input: string): { book: string; chapter: number; verse: number } | null {
@@ -197,12 +198,41 @@ class Game3D {
         fetch(`/themes/${config.activeTheme}/styles/animations.css`).then(r => r.text())
       ]);
 
+      // Load textures
+      const textureLoader = new THREE.TextureLoader();
+      const loadedTextures: THREE.Texture[] = [];
+
+      if (themeConfig.background.textures && themeConfig.background.textures.length > 0) {
+        const texturePromises = themeConfig.background.textures.map(textureFile => {
+          return new Promise<THREE.Texture>((resolve, reject) => {
+            textureLoader.load(
+              `/themes/${config.activeTheme}/images/${textureFile}`,
+              (texture) => {
+                texture.wrapS = THREE.RepeatWrapping;
+                texture.wrapT = THREE.RepeatWrapping;
+                resolve(texture);
+              },
+              undefined,
+              (err) => {
+                console.error(`Failed to load texture: ${textureFile}`, err);
+                // Return a basic placeholder texture on error to prevent crashes
+                resolve(new THREE.Texture());
+              }
+            );
+          });
+        });
+
+        const textures = await Promise.all(texturePromises);
+        loadedTextures.push(...textures);
+      }
+
       this.theme = {
         config: themeConfig,
         backgroundShaders: {
           vertex: vertexShader,
           fragment: fragmentShader
         },
+        loadedTextures: loadedTextures,
         inputTemplate: inputTemplate,
         verseTemplate: verseTemplate,
         styles: styles
@@ -359,7 +389,7 @@ class Game3D {
 
     // Pointer lock for immersive experience
     document.addEventListener('click', () => {
-      document.body.requestPointerLock();
+      //document.body.requestPointerLock();
     });
   }
 
@@ -429,13 +459,19 @@ class Game3D {
         iMouse: { value: new THREE.Vector4(0, 0, 0, 0) },
         iFrame: { value: 0 },
         iFrameRate: { value: 60.0 },
+        iChannel0: { value: this.theme.loadedTextures?.[0] || null },
+        iChannel1: { value: this.theme.loadedTextures?.[1] || null },
+        iChannel2: { value: this.theme.loadedTextures?.[2] || null },
+        iChannel3: { value: this.theme.loadedTextures?.[3] || null },
         iChannelTime: { value: [0.0, 0.0, 0.0, 0.0] },
-        iChannelResolution: { value: [
-          new THREE.Vector3(window.innerWidth, window.innerHeight, 1.0),
-          new THREE.Vector3(window.innerWidth, window.innerHeight, 1.0),
-          new THREE.Vector3(window.innerWidth, window.innerHeight, 1.0),
-          new THREE.Vector3(window.innerWidth, window.innerHeight, 1.0)
-        ] },
+        iChannelResolution: {
+          value: [
+            this.theme.loadedTextures?.[0]?.image ? new THREE.Vector3((this.theme.loadedTextures[0].image as any).width || window.innerWidth, (this.theme.loadedTextures[0].image as any).height || window.innerHeight, 1.0) : new THREE.Vector3(window.innerWidth, window.innerHeight, 1.0),
+            this.theme.loadedTextures?.[1]?.image ? new THREE.Vector3((this.theme.loadedTextures[1].image as any).width || window.innerWidth, (this.theme.loadedTextures[1].image as any).height || window.innerHeight, 1.0) : new THREE.Vector3(window.innerWidth, window.innerHeight, 1.0),
+            this.theme.loadedTextures?.[2]?.image ? new THREE.Vector3((this.theme.loadedTextures[2].image as any).width || window.innerWidth, (this.theme.loadedTextures[2].image as any).height || window.innerHeight, 1.0) : new THREE.Vector3(window.innerWidth, window.innerHeight, 1.0),
+            this.theme.loadedTextures?.[3]?.image ? new THREE.Vector3((this.theme.loadedTextures[3].image as any).width || window.innerWidth, (this.theme.loadedTextures[3].image as any).height || window.innerHeight, 1.0) : new THREE.Vector3(window.innerWidth, window.innerHeight, 1.0)
+          ]
+        },
         iDate: { value: new THREE.Vector4() },
         iSampleRate: { value: 44100.0 }
       },
@@ -520,6 +556,7 @@ void main() {
 
   private lastTime: number = 0;
 
+  // Main Loop
   private animate = (): void => {
     this.animationId = requestAnimationFrame(this.animate);
 
@@ -623,7 +660,8 @@ void main() {
       'KeyA', 'KeyB', 'KeyC', 'KeyD', 'KeyE', 'KeyF', 'KeyG', 'KeyH', 'KeyI', 'KeyJ', 'KeyK', 'KeyL', 'KeyM',
       'KeyN', 'KeyO', 'KeyP', 'KeyQ', 'KeyR', 'KeyS', 'KeyT', 'KeyU', 'KeyV', 'KeyW', 'KeyX', 'KeyY', 'KeyZ',
       'Digit0', 'Digit1', 'Digit2', 'Digit3', 'Digit4', 'Digit5', 'Digit6', 'Digit7', 'Digit8', 'Digit9',
-      'Space', 'Semicolon', 'Enter', 'Backspace'
+      'Space', 'Semicolon', 'Enter', 'Backspace',
+      'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'
     ];
 
     if (!allowedKeys.includes(keyCode)) {
@@ -676,8 +714,14 @@ void main() {
         break;
     }
 
-    // Load new verse
-    this.loadVerse(newBook, newChapter, newVerse);
+    // Hide current verse with exit transition, then load new verse
+    this.hideVerseText();
+    this.currentVerse = null;
+
+    // Load new verse after exit transition completes (0.8s)
+    setTimeout(() => {
+      this.loadVerse(newBook, newChapter, newVerse);
+    }, 800);
   }
 
   private async processBibleReference(): Promise<void> {
@@ -729,9 +773,15 @@ void main() {
     // Clear text content since we're using SVG background
     this.inputTextElement.textContent = '';
 
-    // Apply theme animation class
-    if (this.theme.config.input.animationClass) {
-      this.inputTextElement.className = this.theme.config.input.animationClass;
+    // Apply theme enter class for transitions
+    if (this.theme.config.input.enterClass) {
+      this.inputTextElement.className = this.theme.config.input.enterClass;
+      // Trigger transition to active state on next frame
+      requestAnimationFrame(() => {
+        if (this.theme.config.input.enterActiveClass) {
+          this.inputTextElement!.className = this.theme.config.input.enterActiveClass;
+        }
+      });
     }
 
     // Position the element
@@ -786,9 +836,15 @@ void main() {
     // Clear text content since we're using SVG background
     this.verseTextElement.textContent = '';
 
-    // Apply theme animation class
-    if (this.theme.config.verse.animationClass) {
-      this.verseTextElement.className = this.theme.config.verse.animationClass;
+    // Apply theme enter class for transitions
+    if (this.theme.config.verse.enterClass) {
+      this.verseTextElement.className = this.theme.config.verse.enterClass;
+      // Trigger transition to active state on next frame
+      requestAnimationFrame(() => {
+        if (this.theme.config.verse.enterActiveClass) {
+          this.verseTextElement!.className = this.theme.config.verse.enterActiveClass;
+        }
+      });
     }
 
     // Position the element
@@ -802,14 +858,50 @@ void main() {
   }
 
   private hideInputText(): void {
-    if (this.inputTextElement) {
+    if (this.inputTextElement && this.theme.config.input.exitClass) {
+      // Apply exit transition class
+      this.inputTextElement.className = this.theme.config.input.exitClass;
+
+      // Trigger transition to exit-active state on next frame
+      requestAnimationFrame(() => {
+        if (this.theme.config.input.exitActiveClass) {
+          this.inputTextElement!.className = this.theme.config.input.exitActiveClass;
+
+          // Hide element after transition completes (0.6s for exit transition)
+          setTimeout(() => {
+            if (this.inputTextElement) {
+              this.inputTextElement.style.display = 'none';
+            }
+          }, 600);
+        }
+      });
+    } else if (this.inputTextElement) {
+      // Fallback if no transition classes defined
       this.inputTextElement.style.display = 'none';
     }
   }
 
 
   private hideVerseText(): void {
-    if (this.verseTextElement) {
+    if (this.verseTextElement && this.theme.config.verse.exitClass) {
+      // Apply exit transition class
+      this.verseTextElement.className = this.theme.config.verse.exitClass;
+
+      // Trigger transition to exit-active state on next frame
+      requestAnimationFrame(() => {
+        if (this.theme.config.verse.exitActiveClass) {
+          this.verseTextElement!.className = this.theme.config.verse.exitActiveClass;
+
+          // Hide element after transition completes (0.8s for verse exit transition)
+          setTimeout(() => {
+            if (this.verseTextElement) {
+              this.verseTextElement.style.display = 'none';
+            }
+          }, 800);
+        }
+      });
+    } else if (this.verseTextElement) {
+      // Fallback if no transition classes defined
       this.verseTextElement.style.display = 'none';
     }
   }

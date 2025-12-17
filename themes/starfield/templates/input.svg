@@ -1,0 +1,41 @@
+<svg width="{{width}}" height="{{height}}" viewBox="0 0 {{width}} {{height}}" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <style>
+      .input-background {
+        fill: rgba(5, 15, 35, 0.9);
+        stroke: #64b5f6;
+        stroke-width: 2;
+        rx: 8;
+        filter: drop-shadow(0 0 20px rgba(100, 181, 246, 0.5));
+      }
+      .input-text {
+        font-family: 'Courier New', monospace;
+        font-size: 22px;
+        fill: #e3f2fd;
+        text-anchor: middle;
+        dominant-baseline: middle;
+        text-shadow: 0 0 10px rgba(100, 181, 246, 0.8);
+        font-weight: 400;
+        letter-spacing: 1px;
+      }
+      .cosmic-particles {
+        fill: rgba(100, 181, 246, 0.4);
+        stroke: none;
+      }
+    </style>
+  </defs>
+
+  <!-- Cosmic particle effects -->
+  <circle cx="50" cy="20" r="2" class="cosmic-particles"/>
+  <circle cx="150" cy="15" r="1.5" class="cosmic-particles"/>
+  <circle cx="250" cy="25" r="1" class="cosmic-particles"/>
+  <circle cx="350" cy="18" r="2.5" class="cosmic-particles"/>
+  <circle cx="450" cy="22" r="1.8" class="cosmic-particles"/>
+  <circle cx="550" cy="12" r="1.2" class="cosmic-particles"/>
+
+  <!-- Main background -->
+  <rect x="8" y="8" width="{{innerWidth}}" height="{{innerHeight}}" class="input-background"/>
+
+  <!-- Text -->
+  <text x="{{centerX}}" y="{{centerY}}" class="input-text">{{text}}</text>
+</svg>

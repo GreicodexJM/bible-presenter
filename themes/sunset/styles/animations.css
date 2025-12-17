@@ -1,0 +1,41 @@
+/* Sunset-themed transition classes */
+
+.sunset-motion {
+  animation: sunsetDrift 5s ease-in-out infinite alternate;
+}
+
+/* Input field transitions */
+.fade-enter {
+  opacity: 0;
+  transform: translateY(20px);
+  filter: blur(2px);
+  transition: all 1s ease-out;
+}
+
+.fade-enter-active {
+  opacity: 1;
+  transform: translateY(0);
+  filter: blur(0px);
+}
+
+.fade-exit {
+  opacity: 1;
+  transform: translateY(0);
+  filter: blur(0px);
+  transition: all 0.8s ease-in;
+}
+
+.fade-exit-active {
+  opacity: 0;
+  transform: translateY(-20px);
+  filter: blur(2px);
+}
+
+@keyframes sunsetDrift {
+  0% {
+    transform: translateY(0);
+  }
+  100% {
+    transform: translateY(-5px);
+  }
+}

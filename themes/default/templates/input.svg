@@ -2,7 +2,7 @@
   <defs>
     <style>
       .input-background {
-        fill: rgba(0, 0, 0, 0.8);
+        fill: rgba(255, 255, 255, 0.8);
         stroke: #00ff00;
         stroke-width: 2;
         rx: 10;
@@ -10,7 +10,7 @@
       .input-text {
         font-family: Arial, sans-serif;
         font-size: 24px;
-        fill: #00ff00;
+        fill: #666;
         text-anchor: middle;
         dominant-baseline: middle;
       }

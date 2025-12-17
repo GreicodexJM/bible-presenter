@@ -1,0 +1,37 @@
+{
+  "name": "Candle",
+  "background": {
+    "type": "shader",
+    "vertexShader": "candle.vert",
+    "fragmentShader": "candle.frag",
+    "uniforms": {
+      "iTime": { "type": "float", "value": 0.0 },
+      "iResolution": { "type": "vec2", "value": [1920, 1080] },
+      "iMouse": { "type": "vec4", "value": [0, 0, 0, 0] }
+    },
+    "textures": [],
+    "animationClass": "candle-motion"
+  },
+  "input": {
+    "template": "input.svg",
+    "position": { "x": "50%", "y": "35%" },
+    "size": { "width": "600px", "height": "80px" },
+    "enterClass": "glow-enter",
+    "enterActiveClass": "glow-enter-active",
+    "exitClass": "glow-exit",
+    "exitActiveClass": "glow-exit-active"
+  },
+  "verse": {
+    "template": "verse.svg",
+    "position": { "x": "50%", "y": "65%" },
+    "size": { "width": "800px", "height": "200px" },
+    "enterClass": "glow-enter",
+    "enterActiveClass": "glow-enter-active",
+    "exitClass": "glow-exit",
+    "exitActiveClass": "glow-exit-active"
+  },
+  "transitions": {
+    "fadeDuration": 1500,
+    "easing": "ease-in-out"
+  }
+}

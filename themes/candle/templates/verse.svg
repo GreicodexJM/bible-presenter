@@ -1,0 +1,50 @@
+<svg width="{{width}}" height="{{height}}" viewBox="0 0 {{width}} {{height}}" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <style>
+      .verse-background {
+        fill: rgba(40, 30, 20, 0.85);
+        stroke: #ffb74d;
+        stroke-width: 2;
+        rx: 20;
+        filter: drop-shadow(0 0 15px rgba(255, 183, 77, 0.4));
+      }
+      .verse-text {
+        font-family: 'Segoe UI', sans-serif;
+        font-size: 26px;
+        fill: #fff8e1;
+        text-anchor: middle;
+        dominant-baseline: middle;
+        font-weight: 300;
+        line-height: 1.4;
+      }
+      .verse-reference {
+        font-family: 'Segoe UI', sans-serif;
+        font-size: 22px;
+        font-weight: 500;
+        fill: #ffe0b2;
+        text-anchor: middle;
+        dominant-baseline: middle;
+      }
+      .spark-decoration {
+        fill: rgba(255, 224, 178, 0.4);
+        stroke: none;
+        filter: blur(0.5px);
+      }
+    </style>
+  </defs>
+
+  <!-- Decorative sparks -->
+  <circle cx="40" cy="180" r="3" class="spark-decoration"/>
+  <circle cx="60" cy="160" r="2" class="spark-decoration"/>
+  <circle cx="950" cy="40" r="3" class="spark-decoration"/>
+  <circle cx="930" cy="70" r="2" class="spark-decoration"/>
+
+  <!-- Main background -->
+  <rect x="20" y="20" width="{{innerWidth}}" height="{{innerHeight}}" class="verse-background"/>
+
+  <!-- Reference -->
+  <text x="{{centerX}}" y="{{referenceY}}" class="verse-reference">{{reference}}</text>
+
+  <!-- Verse Text -->
+  <text x="{{centerX}}" y="{{textY}}" class="verse-text">{{text}}</text>
+</svg>

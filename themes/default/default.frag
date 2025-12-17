@@ -30,8 +30,8 @@ void main() {
     float clouds = fbm(cloudUV);
 
     // Add some variation
-    clouds += fbm(cloudUV * 2.0 + time * 0.03) * 0.3;
-    clouds += fbm(cloudUV * 4.0 + time * 0.01) * 0.1;
+    //clouds += fbm(cloudUV * 2.0 + time * 0.03) * 0.3;
+    //clouds += fbm(cloudUV * 4.0 + time * 0.01) * 0.1;
 
     // Create sky gradient (blue to light blue)
     vec3 skyColor = mix(
@@ -44,5 +44,5 @@ void main() {
     float cloudOpacity = smoothstep(0.3, 0.7, clouds);
     vec3 finalColor = mix(skyColor, vec3(1.0, 1.0, 1.0), cloudOpacity * 0.8);
 
-    gl_FragColor = vec4(finalColor, 1.0);
+    gl_FragColor = vec4(skyColor, 1.0);
 }

@@ -1,100 +1,166 @@
-// Lake Reflection - Shadertoy compatible
-// Realistic water surface with reflections and caustics
+vec3 col1 = vec3( 0.938, 0.678, 0.375 );
+vec3 col2 = vec3( 0.455, 0.456, 0.55 );
 
-float hash(vec2 p) {
-    return fract(sin(dot(p, vec2(12.9898, 78.233))) * 43758.5453);
+float hillSoftening = 0.01;
+float reflectionSoftening = 0.1;
+
+
+ 
+float hash( float n )
+{
+    return fract(sin(n)*43758.5453);
+}
+ 
+float noise( in vec2 x )
+{
+    vec2 p = floor(x);
+    vec2 f = fract(x);
+        f = f*f*(3.0-2.0*f);
+        float n = p.x + p.y*57.0;
+        float res = mix(mix( hash(n+  0.0), hash(n+  1.0),f.x), mix( hash(n+ 57.0), hash(n+ 58.0),f.x),f.y);
+        return res;
+}
+ 
+float fbm( vec2 p )
+{
+        float f = 0.0;
+        f += 0.50000*noise( p ); p = p*2.02;
+        f += 0.25000*noise( p ); p = p*2.03;
+        f += 0.12500*noise( p ); p = p*2.01;
+        f += 0.06250*noise( p ); p = p*2.04;
+        f += 0.03125*noise( p );
+        return f/0.984375;
 }
 
-float noise(vec2 p) {
-    vec2 i = floor(p);
-    vec2 f = fract(p);
-    f = f * f * (3.0 - 2.0 * f);
-    float a = hash(i);
-    float b = hash(i + vec2(1.0, 0.0));
-    float c = hash(i + vec2(0.0, 1.0));
-    float d = hash(i + vec2(1.0, 1.0));
-    return mix(mix(a, b, f.x), mix(c, d, f.x), f.y);
+
+
+vec4 mod289(vec4 x)
+{
+    return x - floor(x * (1.0 / 289.0)) * 289.0;
+}
+ 
+vec4 permute(vec4 x)
+{
+    return mod289(((x*34.0)+1.0)*x);
+}
+ 
+vec4 taylorInvSqrt(vec4 r)
+{
+    return 1.79284291400159 - 0.85373472095314 * r;
+}
+ 
+vec2 fade(vec2 t) {
+    return t*t*t*(t*(t*6.0-15.0)+10.0);
 }
 
-float fbm(vec2 p) {
-    float value = 0.0;
-    float amplitude = 0.5;
-    float frequency = 1.0;
-    for(int i = 0; i < 5; i++) {
-        value += amplitude * noise(p * frequency);
-        amplitude *= 0.5;
-        frequency *= 2.0;
+float pnoise(vec2 P, vec2 rep)
+{
+    vec4 Pi = floor(P.xyxy) + vec4(0.0, 0.0, 1.0, 1.0);
+    vec4 Pf = fract(P.xyxy) - vec4(0.0, 0.0, 1.0, 1.0);
+    Pi = mod(Pi, rep.xyxy); // To create noise with explicit period
+    Pi = mod289(Pi);        // To avoid truncation effects in permutation
+    vec4 ix = Pi.xzxz;
+    vec4 iy = Pi.yyww;
+    vec4 fx = Pf.xzxz;
+    vec4 fy = Pf.yyww;
+     
+    vec4 i = permute(permute(ix) + iy);
+     
+    vec4 gx = fract(i * (1.0 / 41.0)) * 2.0 - 1.0 ;
+    vec4 gy = abs(gx) - 0.5 ;
+    vec4 tx = floor(gx + 0.5);
+    gx = gx - tx;
+     
+    vec2 g00 = vec2(gx.x,gy.x);
+    vec2 g10 = vec2(gx.y,gy.y);
+    vec2 g01 = vec2(gx.z,gy.z);
+    vec2 g11 = vec2(gx.w,gy.w);
+     
+    vec4 norm = taylorInvSqrt(vec4(dot(g00, g00), dot(g01, g01), dot(g10, g10), dot(g11, g11)));
+    g00 *= norm.x;  
+    g01 *= norm.y;  
+    g10 *= norm.z;  
+    g11 *= norm.w;  
+     
+    float n00 = dot(g00, vec2(fx.x, fy.x));
+    float n10 = dot(g10, vec2(fx.y, fy.y));
+    float n01 = dot(g01, vec2(fx.z, fy.z));
+    float n11 = dot(g11, vec2(fx.w, fy.w));
+     
+    vec2 fade_xy = fade(Pf.xy);
+    vec2 n_x = mix(vec2(n00, n01), vec2(n10, n11), fade_xy.x);
+    float n_xy = mix(n_x.x, n_x.y, fade_xy.y);
+    return 2.3 * n_xy;
+}
+
+
+
+void mainImage( out vec4 fragColor, in vec2 fragCoord )
+{
+	vec2 uv = fragCoord.xy / iResolution.xy;
+    uv = uv * 2.0 - 1.0;
+    uv.x *= iResolution.x / iResolution.y;
+    
+    vec3 col = vec3( 0.0 );
+    
+    //if (abs(uv.x) < 1.0)
+    {
+
+    
+    	// add sky
+    	col += mix( col1, col2, abs(uv.y) ) + 0.2;
+    	col += mix( vec3(1.0), vec3(0.3), abs((uv.y - 0.45) * 1.5) ) * 0.3;
+
+    	// add hills
+    	for (int i = 0; i < 2; i++)
+    	{
+        	float edge = fbm( vec2(0.0, uv.x * 3.0 + float(i)) ) * 0.15 + 0.1;
+    		if (uv.y < edge + hillSoftening && uv.y > 0.0)
+        		col -= 0.8 * smoothstep( edge + hillSoftening, edge, uv.y );
+    	}
+
+    	// add vignette
+    	float r = length( uv );
+    	col -= r * r * 0.2;
+    
+    	float dist = 1.0 - abs(uv.y) * 0.9;
+    	uv.y *= 0.9;
+    
+    	// add shadows
+    	if (uv.y < 0.1)
+    	{
+        	uv.x *= dist * 1.2;
+        	col -= 0.6 * smoothstep(-0.3, 0.1, uv.y);
+        
+        	float sand = pnoise(vec2(uv.x * 3.5 * dist + dist * 100.0, uv.y * 40.0 * dist), vec2(100.0, 100.0)) - 
+            		 pnoise(vec2(uv.x * 5.0 * dist * dist * dist, uv.y * 1.0 * dist), vec2(100.0, 100.0));
+     		if (sand > 0.4)
+            	col -= smoothstep(0.4, 0.7, dist) * 0.2 * smoothstep( 0.4, 0.8, sand); 
+
+    	}
+
+    	// warp reflections
+    	if (uv.y < 0.0)
+    	{
+    		uv.x += 0.05 * pnoise(vec2(uv.x * 10.0 * dist, uv.y * 100.0 * dist + iTime * 0.5), vec2(100.0, 100.0));
+    		uv.y += 0.04 * pnoise(vec2(uv.x * 10.0 * dist, uv.y * (100.0 * dist + 20.0) + iTime * 0.5), vec2(50.0, 100.0)) * (0.5 + abs(uv.x) * 2.0) - 0.05;
+    	}
+    
+   		// add mountain reflections
+    	for (int i = 0; i < 2; i++)
+    	{
+        	float edge = fbm( vec2(0.0, uv.x * 3.0 + float(i)) ) * 0.1 + 0.1;
+ 
+        	if (uv.y > -edge - reflectionSoftening && uv.y < 0.1)
+        		col -= 0.3 * smoothstep( -edge - reflectionSoftening, -edge, uv.y );
+    	}
+    
+    	// highlights
+    	col -= smoothstep( 0.5, 0.0, abs(uv.y + 0.6) ) * 0.2;
+    	col += smoothstep( 0.3, 0.0, abs(uv.y + 0.3) ) * 0.1;
+    	col -= smoothstep( 0.6, 0.0, abs(uv.y + 1.0) ) * 0.1;
+    	col.z += 0.05 * (1.0 - dist);
     }
-    return value;
-}
-
-// Water wave function
-float waterWave(vec2 p, float time) {
-    float wave1 = sin(p.x * 0.01 + time * 2.0) * cos(p.y * 0.008 + time * 1.5);
-    float wave2 = sin(p.x * 0.005 + time * 1.0) * sin(p.y * 0.012 + time * 2.5);
-    float wave3 = sin(p.x * 0.02 + time * 3.0) * cos(p.y * 0.015 + time * 1.8);
-    return (wave1 + wave2 + wave3) * 0.3;
-}
-
-void mainImage(out vec4 fragColor, in vec2 fragCoord) {
-    vec2 uv = fragCoord / iResolution.xy;
-    vec2 p = fragCoord;
-
-    // Create sky gradient (dawn/dusk colors for lake reflection)
-    vec3 skyTop = vec3(0.3, 0.5, 0.8);    // Blue sky
-    vec3 skyBottom = vec3(0.8, 0.6, 0.4); // Warm horizon
-    vec3 skyColor = mix(skyBottom, skyTop, pow(uv.y, 0.8));
-
-    // Add some clouds
-    vec2 cloudUV = uv * 4.0 + iTime * 0.02;
-    float clouds = fbm(cloudUV);
-    clouds += fbm(cloudUV * 2.0 + iTime * 0.01) * 0.3;
-    clouds += fbm(cloudUV * 4.0 + iTime * 0.005) * 0.1;
-
-    // Mix clouds with sky
-    float cloudOpacity = smoothstep(0.4, 0.8, clouds);
-    skyColor = mix(skyColor, vec3(1.0, 1.0, 0.95), cloudOpacity * 0.6);
-
-    // Water surface (reflection point)
-    float waterLevel = 0.4;
-    bool isWater = uv.y < waterLevel;
-
-    if (isWater) {
-        // Water reflection
-        vec2 reflectionUV = vec2(uv.x, waterLevel + (waterLevel - uv.y));
-
-        // Add water distortion
-        float distortion = waterWave(p, iTime) * 0.02;
-        reflectionUV.x += distortion;
-        reflectionUV.y += distortion * 0.5;
-
-        // Sample reflected sky
-        vec3 reflectedColor = skyColor;
-
-        // Add cloud reflection with distortion
-        vec2 cloudReflectionUV = reflectionUV * 4.0 + iTime * 0.02 + vec2(distortion * 10.0, 0.0);
-        float reflectedClouds = fbm(cloudReflectionUV);
-        reflectedClouds += fbm(cloudReflectionUV * 2.0 + iTime * 0.01) * 0.3;
-        float reflectedCloudOpacity = smoothstep(0.4, 0.8, reflectedClouds);
-        reflectedColor = mix(reflectedColor, vec3(1.0, 1.0, 0.95), reflectedCloudOpacity * 0.8);
-
-        // Add water color and transparency
-        vec3 waterColor = vec3(0.1, 0.3, 0.5); // Deep blue water
-        float depth = (waterLevel - uv.y) * 2.0;
-        vec3 finalWaterColor = mix(reflectedColor, waterColor, depth * 0.7);
-
-        // Add some caustics/light patterns
-        vec2 causticUV = uv * 8.0 + iTime * 0.1 + vec2(distortion * 5.0, 0.0);
-        float caustics = fbm(causticUV) * fbm(causticUV * 1.5 + iTime * 0.05);
-        finalWaterColor += vec3(0.2, 0.3, 0.4) * caustics * 0.3 * (1.0 - depth);
-
-        fragColor = vec4(finalWaterColor, 1.0);
-    } else {
-        // Sky above water
-        fragColor = vec4(skyColor, 1.0);
-    }
-
-    // Add subtle vignette
-    float vignette = 1.0 - length(uv - 0.5) * 0.3;
-    fragColor.rgb *= vignette;
+    
+	fragColor = vec4(col,1.0);
 }

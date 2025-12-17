@@ -1,0 +1,36 @@
+{
+  "name": "Sunset",
+  "background": {
+    "type": "shader",
+    "vertexShader": "sunset.vert",
+    "fragmentShader": "sunset.frag",
+    "uniforms": {
+      "iTime": { "type": "float", "value": 0.0 },
+      "iResolution": { "type": "vec2", "value": [1920, 1080] }
+    },
+    "textures": [],
+    "animationClass": "sunset-motion"
+  },
+  "input": {
+    "template": "input.svg",
+    "position": { "x": "50%", "y": "35%" },
+    "size": { "width": "600px", "height": "80px" },
+    "enterClass": "fade-enter",
+    "enterActiveClass": "fade-enter-active",
+    "exitClass": "fade-exit",
+    "exitActiveClass": "fade-exit-active"
+  },
+  "verse": {
+    "template": "verse.svg",
+    "position": { "x": "50%", "y": "65%" },
+    "size": { "width": "800px", "height": "200px" },
+    "enterClass": "fade-enter",
+    "enterActiveClass": "fade-enter-active",
+    "exitClass": "fade-exit",
+    "exitActiveClass": "fade-exit-active"
+  },
+  "transitions": {
+    "fadeDuration": 1200,
+    "easing": "ease-in-out"
+  }
+}

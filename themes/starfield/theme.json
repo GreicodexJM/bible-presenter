@@ -1,38 +1,36 @@
 {
-  "name": "Jet Stream",
+  "name": "Starfield",
   "background": {
     "type": "shader",
-    "vertexShader": "jetstream.vert",
-    "fragmentShader": "jetstream.frag",
+    "vertexShader": "starfield.vert",
+    "fragmentShader": "starfield.frag",
     "uniforms": {
       "time": { "type": "float", "value": 0.0 },
       "resolution": { "type": "vec2", "value": [1920, 1080] }
     },
-    "textures": [
-      "Noise.png"
-    ],
-    "animationClass": "atmospheric-flow"
+    "textures": [],
+    "animationClass": "cosmic-drift"
   },
   "input": {
     "template": "input.svg",
     "position": { "x": "50%", "y": "35%" },
     "size": { "width": "600px", "height": "80px" },
-    "enterClass": "input-enter",
-    "enterActiveClass": "input-enter-active",
-    "exitClass": "input-exit",
-    "exitActiveClass": "input-exit-active"
+    "enterClass": "cosmic-enter",
+    "enterActiveClass": "cosmic-enter-active",
+    "exitClass": "cosmic-exit",
+    "exitActiveClass": "cosmic-exit-active"
   },
   "verse": {
     "template": "verse.svg",
     "position": { "x": "50%", "y": "65%" },
     "size": { "width": "800px", "height": "200px" },
-    "enterClass": "verse-enter",
-    "enterActiveClass": "verse-enter-active",
-    "exitClass": "verse-exit",
-    "exitActiveClass": "verse-exit-active"
+    "enterClass": "stellar-enter",
+    "enterActiveClass": "stellar-enter-active",
+    "exitClass": "stellar-exit",
+    "exitActiveClass": "stellar-exit-active"
   },
   "transitions": {
-    "fadeDuration": 1000,
+    "fadeDuration": 1200,
     "easing": "ease-in-out"
   }
 }

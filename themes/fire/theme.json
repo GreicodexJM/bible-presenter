@@ -1,0 +1,37 @@
+{
+  "name": "Fire",
+  "background": {
+    "type": "shader",
+    "vertexShader": "fire.vert",
+    "fragmentShader": "fire.frag",
+    "uniforms": {
+      "iTime": { "type": "float", "value": 0.0 },
+      "iResolution": { "type": "vec2", "value": [1920, 1080] },
+      "iMouse": { "type": "vec4", "value": [0, 0, 0, 0] }
+    },
+    "textures": [],
+    "animationClass": "fire-motion"
+  },
+  "input": {
+    "template": "input.svg",
+    "position": { "x": "50%", "y": "35%" },
+    "size": { "width": "600px", "height": "80px" },
+    "enterClass": "heat-enter",
+    "enterActiveClass": "heat-enter-active",
+    "exitClass": "heat-exit",
+    "exitActiveClass": "heat-exit-active"
+  },
+  "verse": {
+    "template": "verse.svg",
+    "position": { "x": "50%", "y": "65%" },
+    "size": { "width": "800px", "height": "200px" },
+    "enterClass": "heat-enter",
+    "enterActiveClass": "heat-enter-active",
+    "exitClass": "heat-exit",
+    "exitActiveClass": "heat-exit-active"
+  },
+  "transitions": {
+    "fadeDuration": 1000,
+    "easing": "ease-out"
+  }
+}

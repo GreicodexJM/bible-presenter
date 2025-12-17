@@ -1,0 +1,44 @@
+/* Fire-themed transition classes */
+
+.fire-motion {
+  animation: heatHaze 8s infinite linear;
+}
+
+/* Input field transitions */
+.heat-enter {
+  opacity: 0;
+  transform: scale(0.9);
+  filter: blur(5px) brightness(2);
+  transition: all 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.heat-enter-active {
+  opacity: 1;
+  transform: scale(1);
+  filter: blur(0px) brightness(1);
+}
+
+.heat-exit {
+  opacity: 1;
+  transform: scale(1);
+  filter: blur(0px);
+  transition: all 0.5s ease-in;
+}
+
+.heat-exit-active {
+  opacity: 0;
+  transform: scale(1.1);
+  filter: blur(5px) brightness(2);
+}
+
+@keyframes heatHaze {
+  0% {
+    filter: hue-rotate(0deg);
+  }
+  50% {
+    filter: hue-rotate(-5deg);
+  }
+  100% {
+    filter: hue-rotate(0deg);
+  }
+}
