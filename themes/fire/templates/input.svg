@@ -1,37 +1,22 @@
-<svg width="{{width}}" height="{{height}}" viewBox="0 0 {{width}} {{height}}" xmlns="http://www.w3.org/2000/svg">
+<svg width="100%" height="100%" viewBox="0 0 100 100" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
   <defs>
     <style>
       .input-background {
         fill: rgba(60, 0, 0, 0.7);
         stroke: #ff5722;
         stroke-width: 2;
-        rx: 15;
         filter: drop-shadow(0 0 10px rgba(255, 87, 34, 0.4));
-      }
-      .input-text {
-        font-family: 'Segoe UI', sans-serif;
-        font-size: 24px;
-        fill: #fff3e0;
-        text-anchor: middle;
-        dominant-baseline: middle;
-        font-weight: 300;
-        letter-spacing: 1px;
+        vector-effect: non-scaling-stroke;
       }
       .fire-lines {
         stroke: rgba(255, 112, 67, 0.3);
         stroke-width: 1.5;
         fill: none;
+        vector-effect: non-scaling-stroke;
       }
     </style>
   </defs>
-
-  <!-- Decorative fire lines -->
-  <path d="M 20 65 Q 40 50 60 65 T 100 65" class="fire-lines"/>
-  <path d="M 120 65 Q 140 50 160 65 T 200 65" class="fire-lines"/>
-
-  <!-- Main background -->
-  <rect x="10" y="10" width="{{innerWidth}}" height="{{innerHeight}}" class="input-background"/>
-
-  <!-- Text -->
-  <text x="{{centerX}}" y="{{centerY}}" class="input-text">{{text}}</text>
+  <path d="M 10 90 Q 20 70 30 90 T 50 90" class="fire-lines"/>
+  <path d="M 60 90 Q 70 70 80 90 T 100 90" class="fire-lines"/>
+  <rect x="2" y="2" width="96" height="96" rx="5" ry="5" class="input-background"/>
 </svg>

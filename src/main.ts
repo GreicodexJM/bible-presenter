@@ -98,7 +98,7 @@ class BibleService {
       if (this.translationData) {
         // Check for array-based structure (new format)
         if (Array.isArray(this.translationData.books)) {
-          const bookData = this.translationData.books.find((b: any) => b.name.toUpperCase().includes(book.toUpperCase() ) );
+          const bookData = this.translationData.books.find((b: any) => b.name.toUpperCase().includes(book.toUpperCase()) );
           if (bookData) {
             const chapterData = bookData.chapters.find((c: any) => c.chapter === chapter);
             if (chapterData) {
@@ -119,6 +119,25 @@ class BibleService {
                 };
               }
             }
+          }
+        } 
+        // Fallback to object-based structure (old format)
+        else {
+          const bookData = this.translationData.books[book.toUpperCase()];
+          if (bookData && bookData.chapters[chapter] && bookData.chapters[chapter][verse]) {
+            return {
+              reference: `${book.toUpperCase()} ${chapter}:${verse}`,
+              verses: [{
+                book: book.toUpperCase(),
+                chapter: chapter,
+                verse: verse,
+                text: bookData.chapters[chapter][verse]
+              }],
+              text: bookData.chapters[chapter][verse],
+              translation_id: this.translationData.metadata?.abbreviation,
+              translation_name: this.translationData.metadata?.name,
+              translation_note: this.translationData.metadata?.description
+            };
           }
         }
       }
@@ -226,7 +245,7 @@ class Game3D {
               (err) => {
                 console.error(`Failed to load texture: ${textureFile}`, err);
                 // Return a basic placeholder texture on error to prevent crashes
-                reject(new THREE.Texture());
+                resolve(new THREE.Texture());
               }
             );
           });
@@ -336,7 +355,6 @@ class Game3D {
       z-index: 11;
       pointer-events: auto;
     `;
-
     // Create native input element
     this.inputTextElement = document.createElement('input');
     this.inputTextElement.type = 'text';
@@ -353,9 +371,8 @@ class Game3D {
       font-family: 'Segoe UI', sans-serif;
       text-shadow: 0 0 5px rgba(0,0,0,0.5);
     `;
-
     // Add event listeners for native input
-    this.inputTextElement.addEventListener('keyup', (e) => {
+    this.inputTextElement.addEventListener('keydown', (e) => {
       if (e.key === 'Enter') {
         this.processBibleReference();
       } else if (e.key === 'Escape') {
@@ -372,20 +389,6 @@ class Game3D {
     // Create verse text element
     this.verseTextElement = document.createElement('div');
     this.verseTextElement.id = 'bible-verse';
-    this.verseTextElement.style.cssText = `
-      position: absolute;
-      left: ${this.theme.config.verse.position.x};
-      top: ${this.theme.config.verse.position.y};
-      width: ${this.theme.config.verse.size.width};
-      height: ${this.theme.config.verse.size.height};
-      font-size: 28px;
-      color: #ffffff;
-      text-align: center;
-      white-space: pre-wrap;
-      display: none;
-      z-index: 11;
-      line-height: 1.4;
-    `;
 
     // Add elements to overlay
     this.textOverlay.appendChild(this.inputContainer);
@@ -679,7 +682,7 @@ void main() {
     // Load new verse after exit transition completes (0.8s)
     setTimeout(() => {
       this.loadVerse(newBook, newChapter, newVerse);
-    }, 800);
+    }, 8000);
   }
 
   private async processBibleReference(): Promise<void> {
@@ -713,13 +716,7 @@ void main() {
 
     // Replace template variables in SVG (remove text)
     let svgContent = this.theme.inputTemplate
-      .replace(/\{\{text\}\}/g, '')
-      .replace(/\{\{width\}\}/g, this.theme.config.input.size.width)
-      .replace(/\{\{height\}\}/g, this.theme.config.input.size.height)
-      .replace(/\{\{innerWidth\}\}/g, (parseInt(this.theme.config.input.size.width) - 20).toString())
-      .replace(/\{\{innerHeight\}\}/g, (parseInt(this.theme.config.input.size.height) - 20).toString())
-      .replace(/\{\{centerX\}\}/g, (parseInt(this.theme.config.input.size.width) / 2).toString())
-      .replace(/\{\{centerY\}\}/g, (parseInt(this.theme.config.input.size.height) / 2).toString());
+      .replace(/\{\{text\}\}/g, '');
 
     // Convert SVG to data URL for background image
     const svgDataUrl = `data:image/svg+xml;base64,${btoa(svgContent)}`;
@@ -768,31 +765,14 @@ void main() {
     // Replace template variables in SVG
     let svgContent = this.theme.verseTemplate
       .replace(/\{\{reference\}\}/g, this.escapeXml(reference))
-      .replace(/\{\{text\}\}/g, this.escapeXml(text))
-      .replace(/\{\{width\}\}/g, this.theme.config.verse.size.width)
-      .replace(/\{\{height\}\}/g, this.theme.config.verse.size.height)
-      .replace(/\{\{innerWidth\}\}/g, (parseInt(this.theme.config.verse.size.width) - 40).toString())
-      .replace(/\{\{innerHeight\}\}/g, (parseInt(this.theme.config.verse.size.height) - 40).toString())
-      .replace(/\{\{centerX\}\}/g, (parseInt(this.theme.config.verse.size.width) / 2).toString())
-      .replace(/\{\{referenceY\}\}/g, '50')
-      .replace(/\{\{textY\}\}/g, '120');
+      .replace(/\{\{text\}\}/g, this.escapeXml(text));
 
     // Convert SVG to data URL for background image
     const svgDataUrl = `data:image/svg+xml;base64,${btoa(svgContent)}`;
 
-    // Apply SVG as background image
-    this.verseTextElement.style.backgroundImage = `url("${svgDataUrl}")`;
-    this.verseTextElement.style.backgroundSize = 'contain';
-    this.verseTextElement.style.backgroundRepeat = 'no-repeat';
-    this.verseTextElement.style.backgroundPosition = 'center';
-
     // Clear text content since we're using SVG background
     this.verseTextElement.textContent = '';
-    //this.verseTextElement.innerHTML = svgContent; // Keep using BG for verse for consistency with previous working state?
-    // Wait, previous working state used innerHTML?
-    // In Turn 18 read_file, showVerseText had:
-    // this.verseTextElement.innerHTML = svgContent;
-    // So I should stick to that for Verse.
+    
     this.verseTextElement.innerHTML = svgContent;
     this.verseTextElement.style.backgroundImage = ''; // Clear BG if using innerHTML
 
@@ -832,7 +812,7 @@ void main() {
             if (this.inputContainer) {
               this.inputContainer.style.display = 'none';
             }
-          }, 600);
+          }, 6000);
         }
       });
     } else if (this.inputContainer) {
@@ -858,7 +838,7 @@ void main() {
             if (this.verseTextElement) {
               this.verseTextElement.style.display = 'none';
             }
-          }, 800);
+          }, 8000);
         }
       });
     } else if (this.verseTextElement) {

@@ -1,36 +1,23 @@
-<svg width="{{width}}" height="{{height}}" viewBox="0 0 {{width}} {{height}}" xmlns="http://www.w3.org/2000/svg">
+<svg width="100%" height="100%" viewBox="0 0 100 100" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
   <defs>
     <style>
       .input-background {
         fill: rgba(0, 0, 0, 0.7);
         stroke: #4a90e2;
         stroke-width: 2;
-        rx: 15;
+        rx: 5;
         filter: drop-shadow(0 4px 8px rgba(74, 144, 226, 0.3));
-      }
-      .input-text {
-        font-family: 'Georgia', serif;
-        font-size: 24px;
-        fill: #e8f4fd;
-        text-anchor: middle;
-        dominant-baseline: middle;
-        text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+        vector-effect: non-scaling-stroke;
       }
       .water-reflection {
         fill: rgba(74, 144, 226, 0.2);
         stroke: #4a90e2;
         stroke-width: 1;
-        rx: 15;
+        rx: 5;
+        vector-effect: non-scaling-stroke;
       }
     </style>
   </defs>
-
-  <!-- Water reflection effect -->
-  <rect x="12" y="52" width="{{innerWidth}}" height="20" class="water-reflection" opacity="0.6"/>
-
-  <!-- Main background -->
-  <rect x="10" y="10" width="{{innerWidth}}" height="{{innerHeight}}" class="input-background"/>
-
-  <!-- Text -->
-  <text x="{{centerX}}" y="{{centerY}}" class="input-text">{{text}}</text>
+  <rect x="2" y="65" width="96" height="25" class="water-reflection" opacity="0.6"/>
+  <rect x="2" y="2" width="96" height="96" rx="5" ry="5" class="input-background"/>
 </svg>

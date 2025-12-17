@@ -14,7 +14,7 @@
   "input": {
     "template": "input.svg",
     "position": { "x": "50%", "y": "35%" },
-    "size": { "width": "600px", "height": "80px" },
+    "size": { "width": "60%", "height": "10%" },
     "enterClass": "cosmic-enter",
     "enterActiveClass": "cosmic-enter-active",
     "exitClass": "cosmic-exit",
@@ -23,7 +23,7 @@
   "verse": {
     "template": "verse.svg",
     "position": { "x": "50%", "y": "65%" },
-    "size": { "width": "800px", "height": "200px" },
+    "size": { "width": "80%", "height": "30%" },
     "enterClass": "stellar-enter",
     "enterActiveClass": "stellar-enter-active",
     "exitClass": "stellar-exit",

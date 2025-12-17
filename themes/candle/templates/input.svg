@@ -1,37 +1,26 @@
-<svg width="{{width}}" height="{{height}}" viewBox="0 0 {{width}} {{height}}" xmlns="http://www.w3.org/2000/svg">
+<svg width="100%" height="100%" viewBox="0 0 100 100" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
   <defs>
     <style>
       .input-background {
         fill: rgba(40, 30, 20, 0.7);
         stroke: #ffecb3;
         stroke-width: 2;
-        rx: 15;
-        filter: drop-shadow(0 0 10px rgba(255, 236, 179, 0.3));
-      }
-      .input-text {
-        font-family: 'Segoe UI', sans-serif;
-        font-size: 24px;
-        fill: #fff8e1;
-        text-anchor: middle;
-        dominant-baseline: middle;
-        font-weight: 300;
-        letter-spacing: 1px;
+        filter: drop-shadow(0 0 5px rgba(255, 236, 179, 0.3));
+        vector-effect: non-scaling-stroke;
       }
       .wax-lines {
         stroke: rgba(255, 248, 225, 0.2);
         stroke-width: 1.5;
         fill: none;
+        vector-effect: non-scaling-stroke;
       }
     </style>
   </defs>
 
   <!-- Decorative wax lines -->
-  <path d="M 20 65 Q 40 55 60 65 T 100 65" class="wax-lines"/>
-  <path d="M 120 65 Q 140 55 160 65 T 200 65" class="wax-lines"/>
+  <path d="M 10 90 Q 20 70 30 90 T 50 90" class="wax-lines"/>
+  <path d="M 60 90 Q 70 70 80 90 T 90 90" class="wax-lines"/>
 
   <!-- Main background -->
-  <rect x="10" y="10" width="{{innerWidth}}" height="{{innerHeight}}" class="input-background"/>
-
-  <!-- Text -->
-  <text x="{{centerX}}" y="{{centerY}}" class="input-text">{{text}}</text>
+  <rect x="1" y="1" width="98" height="98" rx="5" ry="5" class="input-background"/>
 </svg>

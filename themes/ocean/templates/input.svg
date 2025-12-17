@@ -1,37 +1,22 @@
-<svg width="{{width}}" height="{{height}}" viewBox="0 0 {{width}} {{height}}" xmlns="http://www.w3.org/2000/svg">
+<svg width="100%" height="100%" viewBox="0 0 100 100" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
   <defs>
     <style>
       .input-background {
         fill: rgba(0, 40, 80, 0.7);
         stroke: #4fc3f7;
         stroke-width: 2;
-        rx: 15;
         filter: drop-shadow(0 4px 8px rgba(79, 195, 247, 0.3));
-      }
-      .input-text {
-        font-family: 'Segoe UI', sans-serif;
-        font-size: 24px;
-        fill: #e1f5fe;
-        text-anchor: middle;
-        dominant-baseline: middle;
-        font-weight: 300;
-        letter-spacing: 1px;
+        vector-effect: non-scaling-stroke;
       }
       .wave-lines {
         stroke: rgba(255, 255, 255, 0.2);
         stroke-width: 1.5;
         fill: none;
+        vector-effect: non-scaling-stroke;
       }
     </style>
   </defs>
-
-  <!-- Decorative wave lines -->
-  <path d="M 20 60 Q 60 50 100 60 T 180 60" class="wave-lines"/>
-  <path d="M 20 68 Q 60 58 100 68 T 180 68" class="wave-lines"/>
-
-  <!-- Main background -->
-  <rect x="10" y="10" width="{{innerWidth}}" height="{{innerHeight}}" class="input-background"/>
-
-  <!-- Text -->
-  <text x="{{centerX}}" y="{{centerY}}" class="input-text">{{text}}</text>
+  <path d="M 10 90 Q 20 70 30 90 T 50 90" class="wave-lines"/>
+  <path d="M 60 90 Q 70 70 80 90 T 100 90" class="wave-lines"/>
+  <rect x="2" y="2" width="96" height="96" rx="5" ry="5" class="input-background"/>
 </svg>

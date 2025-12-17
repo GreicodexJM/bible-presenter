@@ -1,9 +1,9 @@
 {
-  "name": "Default",
+  "name": "Forest",
   "background": {
     "type": "shader",
     "vertexShader": "default.vert",
-    "fragmentShader": "default.frag",
+    "fragmentShader": "forest.frag",
     "uniforms": {
       "time": { "type": "float", "value": 0.0 },
       "resolution": { "type": "vec2", "value": [1920, 1080] }
@@ -13,14 +13,14 @@
   },
   "input": {
     "template": "input.svg",
-    "position": { "x": "", "y": "" },
-    "size": { "width": "10vw", "height": "10vh" },
+    "position": { "x": "50%", "y": "40%" },
+    "size": { "width": "60%", "height": "10%" },
     "animationClass": "slide-up"
   },
   "verse": {
     "template": "verse.svg",
-    "position": { "x": "", "y": "" },
-    "size": { "width": "100vw", "height": "100vw" },
+    "position": { "x": "50%", "y": "60%" },
+    "size": { "width": "80%", "height": "30%" },
     "animationClass": "fade-in-scale"
   },
   "transitions": {

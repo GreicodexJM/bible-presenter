@@ -1,16 +1,17 @@
-<svg width="{{width}}" height="{{height}}" viewBox="0 0 {{width}} {{height}}" xmlns="http://www.w3.org/2000/svg">
+<svg width="100%" height="100%" viewBox="0 0 100 100" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
   <defs>
     <style>
       .verse-background {
         fill: rgba(0, 0, 0, 0.8);
         stroke: #87ceeb;
         stroke-width: 2;
-        rx: 20;
+        rx: 5;
         filter: drop-shadow(0 6px 12px rgba(135, 206, 235, 0.4));
+        vector-effect: non-scaling-stroke;
       }
       .verse-text {
         font-family: 'Georgia', serif;
-        font-size: 26px;
+        font-size: 8px;
         fill: #f0f8ff;
         text-anchor: middle;
         dominant-baseline: middle;
@@ -19,7 +20,7 @@
       }
       .verse-reference {
         font-family: 'Georgia', serif;
-        font-size: 22px;
+        font-size: 6px;
         font-weight: bold;
         fill: #b0e0e6;
         text-anchor: middle;
@@ -30,20 +31,13 @@
         fill: rgba(135, 206, 235, 0.15);
         stroke: #87ceeb;
         stroke-width: 1;
-        rx: 20;
+        rx: 5;
+        vector-effect: non-scaling-stroke;
       }
     </style>
   </defs>
-
-  <!-- Water ripple effect -->
-  <rect x="22" y="152" width="{{innerWidth}}" height="30" class="water-ripple" opacity="0.5"/>
-
-  <!-- Main background -->
-  <rect x="20" y="20" width="{{innerWidth}}" height="{{innerHeight}}" class="verse-background"/>
-
-  <!-- Reference -->
-  <text x="{{centerX}}" y="{{referenceY}}" class="verse-reference">{{reference}}</text>
-
-  <!-- Verse Text -->
-  <text x="{{centerX}}" y="{{textY}}" class="verse-text">{{text}}</text>
+  <rect x="3" y="76" width="94" height="15" class="water-ripple" opacity="0.5"/>
+  <rect x="2" y="2" width="96" height="96" rx="5" ry="5" class="verse-background"/>
+  <text x="50" y="20" class="verse-reference">{{reference}}</text>
+  <text x="50" y="60" class="verse-text">{{text}}</text>
 </svg>
