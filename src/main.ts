@@ -96,39 +96,48 @@ class BibleService {
     // Try local data first
     try {
       if (this.translationData) {
-        const bookData = this.translationData.books[book.toUpperCase()];
-        if (bookData && bookData.chapters[chapter] && bookData.chapters[chapter][verse]) {
-          return {
-            reference: `${book.toUpperCase()} ${chapter}:${verse}`,
-            verses: [{
-              book: book.toUpperCase(),
-              chapter: chapter,
-              verse: verse,
-              text: bookData.chapters[chapter][verse]
-            }],
-            text: bookData.chapters[chapter][verse],
-            translation_id: this.translationData.metadata.abbreviation,
-            translation_name: this.translationData.metadata.name,
-            translation_note: this.translationData.metadata.description
-          };
+        // Check for array-based structure (new format)
+        if (Array.isArray(this.translationData.books)) {
+          const bookData = this.translationData.books.find((b: any) => b.name.toUpperCase().includes(book.toUpperCase()) );
+          if (bookData) {
+            const chapterData = bookData.chapters.find((c: any) => c.chapter === chapter);
+            if (chapterData) {
+              const verseData = chapterData.verses.find((v: any) => v.verse === verse);
+              if (verseData) {
+                return {
+                  reference: `${book.toUpperCase()} ${chapter}:${verse}`,
+                  verses: [{
+                    book: book.toUpperCase(),
+                    chapter: chapter,
+                    verse: verse,
+                    text: verseData.text
+                  }],
+                  text: verseData.text,
+                  translation_id: this.translationData.metadata?.abbreviation || 'KJV',
+                  translation_name: this.translationData.metadata?.name || this.translationData.translation || 'King James Version',
+                  translation_note: this.translationData.metadata?.description || ''
+                };
+              }
+            }
+          }
         }
       }
     } catch (error) {
-      console.error('Bible API error:',error);
+      console.error('Bible API error:', error);
     }
     return null;
   }
 
   parseReference(input: string): { book: string; chapter: number; verse: number } | null {
     // Match patterns like "GEN 1:1", "gen 1:1", "Genesis 1:1", etc.
-    const match = input.trim().match(/^([A-Za-z\s]+)\s+(\d+):(\d+)$/);
+    const match = input.trim().match(/^([A-Za-z\s]+)\s*(\d+)?:?(\d+)?$/);
     if (!match) return null;
 
     const [, book, chapter, verse] = match;
     return {
       book: book.trim(),
-      chapter: parseInt(chapter),
-      verse: parseInt(verse)
+      chapter: parseInt(chapter??1),
+      verse: parseInt(verse??1)
     };
   }
 }
@@ -303,8 +312,8 @@ class Game3D {
       position: absolute;
       top: 0;
       left: 0;
-      width: 100%;
-      height: 100%;
+      width: 100vw;
+      height: 100vh;
       pointer-events: none;
       z-index: 10;
       display: flex;
@@ -323,7 +332,7 @@ class Game3D {
       width: ${this.theme.config.input.size.width};
       height: ${this.theme.config.input.size.height};
       font-size: 24px;
-      color: #00ff00;
+      color: #ffffff;
       text-align: center;
       white-space: pre-wrap;
       display: none;
@@ -355,8 +364,6 @@ class Game3D {
     // Add overlay to app
     document.getElementById('app')!.appendChild(this.textOverlay);
   }
-
-
 
   private setupEventListeners(): void {
     // Mouse events
@@ -545,15 +552,6 @@ void main() {
     return webGLShader;
   }
 
-  private hexToRgb(hex: string): THREE.Vector3 {
-    const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
-    return result ? new THREE.Vector3(
-      parseInt(result[1], 16) / 255,
-      parseInt(result[2], 16) / 255,
-      parseInt(result[3], 16) / 255
-    ) : new THREE.Vector3(1, 1, 1);
-  }
-
   private lastTime: number = 0;
 
   // Main Loop
@@ -622,7 +620,7 @@ void main() {
 
     // Only handle movement if not showing verse (ignore mouse input as requested)
     if (!this.currentVerse) {
-      const moveSpeed = 0.1;
+      const moveSpeed = 0.0;
 
       // Keyboard movement (only when not in Bible mode)
       if (this.input.keyboard['KeyW'] || this.input.keyboard['ArrowUp']) {
@@ -660,7 +658,7 @@ void main() {
       'KeyA', 'KeyB', 'KeyC', 'KeyD', 'KeyE', 'KeyF', 'KeyG', 'KeyH', 'KeyI', 'KeyJ', 'KeyK', 'KeyL', 'KeyM',
       'KeyN', 'KeyO', 'KeyP', 'KeyQ', 'KeyR', 'KeyS', 'KeyT', 'KeyU', 'KeyV', 'KeyW', 'KeyX', 'KeyY', 'KeyZ',
       'Digit0', 'Digit1', 'Digit2', 'Digit3', 'Digit4', 'Digit5', 'Digit6', 'Digit7', 'Digit8', 'Digit9',
-      'Space', 'Semicolon', 'Enter', 'Backspace',
+      'Space', 'Semicolon', 'Enter', 'Backspace','Escape',
       'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'
     ];
 
@@ -676,7 +674,10 @@ void main() {
 
     // Handle text input
     if (keyCode === 'Enter') {
+      this.hideInputText();
       this.processBibleReference();
+      this.textInput = '';
+      return;
     } else if (keyCode === 'Space') {
       this.textInput += ' ';
     } else if (keyCode === 'Semicolon') {
@@ -689,6 +690,10 @@ void main() {
     } else if (keyCode.startsWith('Digit')) {
       const digit = keyCode.replace('Digit', '');
       this.textInput += digit;
+    } else if (keyCode ==='Escape') {
+      this.textInput = '';
+      this.hideInputText();
+      return;
     }
 
     // Show input text
@@ -739,10 +744,9 @@ void main() {
     const verseData = await this.bibleService.getVerse(book, chapter, verse);
     if (verseData) {
       this.currentVerse = verseData;
-      this.fadeInVerseText();
+      this.showVerseText();
     } else {
       this.hideVerseText();
-      this.currentVerse = null;
     }
   }
 
@@ -766,13 +770,13 @@ void main() {
 
     // Apply SVG as background image
     this.inputTextElement.style.backgroundImage = `url("${svgDataUrl}")`;
-    this.inputTextElement.style.backgroundSize = 'contain';
-    this.inputTextElement.style.backgroundRepeat = 'no-repeat';
-    this.inputTextElement.style.backgroundPosition = 'center';
+    //this.inputTextElement.style.backgroundSize = 'contain';
+    //this.inputTextElement.style.backgroundRepeat = 'no-repeat';
+    //this.inputTextElement.style.backgroundPosition = 'center';
 
     // Clear text content since we're using SVG background
-    this.inputTextElement.textContent = '';
-
+    //this.inputTextElement.textContent = '';
+    this.inputTextElement.innerHTML = svgContent;
     // Apply theme enter class for transitions
     if (this.theme.config.input.enterClass) {
       this.inputTextElement.className = this.theme.config.input.enterClass;
@@ -785,12 +789,13 @@ void main() {
     }
 
     // Position the element
-    this.inputTextElement.style.left = this.theme.config.input.position.x;
-    this.inputTextElement.style.top = this.theme.config.input.position.y;
-    this.inputTextElement.style.width = this.theme.config.input.size.width;
-    this.inputTextElement.style.height = this.theme.config.input.size.height;
+    this.inputTextElement.style.left = ''; //this.theme.config.input.position.x;
+    this.inputTextElement.style.top = ''; //this.theme.config.input.position.y;
+    this.inputTextElement.style.width = ''; //this.theme.config.input.size.width;
+    this.inputTextElement.style.height = ''; //this.theme.config.input.size.height;
 
     this.inputTextElement.style.display = 'block';
+    this.hideVerseText();
   }
 
   private escapeXml(unsafe: string): string {
@@ -806,7 +811,7 @@ void main() {
     });
   }
 
-  private fadeInVerseText(): void {
+  private showVerseText(): void {
     if (!this.currentVerse || !this.verseTextElement || !this.theme.verseTemplate) return;
 
     const reference = this.currentVerse.reference;
@@ -828,13 +833,14 @@ void main() {
     const svgDataUrl = `data:image/svg+xml;base64,${btoa(svgContent)}`;
 
     // Apply SVG as background image
-    this.verseTextElement.style.backgroundImage = `url("${svgDataUrl}")`;
-    this.verseTextElement.style.backgroundSize = 'contain';
-    this.verseTextElement.style.backgroundRepeat = 'no-repeat';
-    this.verseTextElement.style.backgroundPosition = 'center';
+    //this.verseTextElement.style.backgroundImage = `url("${svgDataUrl}")`;
+    //this.verseTextElement.style.backgroundSize = 'contain';
+    //this.verseTextElement.style.backgroundRepeat = 'no-repeat';
+    //this.verseTextElement.style.backgroundPosition = 'center';
 
     // Clear text content since we're using SVG background
-    this.verseTextElement.textContent = '';
+    //this.verseTextElement.textContent = '';
+    this.verseTextElement.innerHTML = svgContent;
 
     // Apply theme enter class for transitions
     if (this.theme.config.verse.enterClass) {
@@ -848,10 +854,10 @@ void main() {
     }
 
     // Position the element
-    this.verseTextElement.style.left = this.theme.config.verse.position.x;
-    this.verseTextElement.style.top = this.theme.config.verse.position.y;
-    this.verseTextElement.style.width = this.theme.config.verse.size.width;
-    this.verseTextElement.style.height = this.theme.config.verse.size.height;
+    this.verseTextElement.style.left = ''; //this.theme.config.verse.position.x;
+    this.verseTextElement.style.top = ''; //this.theme.config.verse.position.y;
+    this.verseTextElement.style.width = ''; //this.theme.config.verse.size.width;
+    this.verseTextElement.style.height = ''; //this.theme.config.verse.size.height;
 
     // Show immediately (CSS transitions will handle animation)
     this.verseTextElement.style.display = 'block';
@@ -883,6 +889,7 @@ void main() {
 
 
   private hideVerseText(): void {
+    this.currentVerse = null;
     if (this.verseTextElement && this.theme.config.verse.exitClass) {
       // Apply exit transition class
       this.verseTextElement.className = this.theme.config.verse.exitClass;
