@@ -42,7 +42,7 @@ vec3 raycast( in vec3 ro, vec3 rd )
 
 void mainImage( out vec4 fragColor, in vec2 fragCoord )
 {
-	float t = iTime;
+	float t = iTime/30.;
     vec2 q = fragCoord.xy / iResolution.xy;
     vec2 p = -1.0 + 2.0 * q;
     p.x *= iResolution.x/iResolution.y;

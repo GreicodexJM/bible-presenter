@@ -39,7 +39,7 @@
   <path d="M 4 55 Q 11 52 18 55 Q 26 58 33 55 Q 41 52 48 55" class="stellar-patterns"/>
   <path d="M 4 75 Q 12 72 21 75 Q 30 78 38 75 Q 47 72 56 75" class="stellar-patterns"/>
   <path d="M 4 95 Q 15 92 26 95 Q 37 98 48 95" class="stellar-patterns"/>
-  <rect x="2" y="2" width="96" height="96" rx="5" ry="5" class="verse-background"/>
+  <!-- rect x="2" y="2" width="96" height="96" rx="5" ry="5" class="verse-background"/-->
   <text x="50" y="20" class="verse-reference">{{reference}}</text>
   <text x="50" y="60" class="verse-text">{{text}}</text>
 </svg>

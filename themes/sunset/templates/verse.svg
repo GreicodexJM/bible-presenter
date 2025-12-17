@@ -1,29 +1,17 @@
 <svg width="100%" height="100%" viewBox="0 0 100 100" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
   <defs>
+    <linearGradient id="verseGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:rgba(80, 40, 0, 0.9);stop-opacity:1" />
+      <stop offset="50%" style="stop-color:rgba(120, 60, 20, 0.8);stop-opacity:1" />
+      <stop offset="100%" style="stop-color:rgba(100, 50, 10, 0.1);stop-opacity:1" />
+    </linearGradient>
     <style>
       .verse-background {
-        fill: rgba(80, 40, 0, 0.85);
+        fill: url(#verseGradient);
         stroke: #ffb74d;
         stroke-width: 2;
         filter: drop-shadow(0 6px 12px rgba(255, 183, 77, 0.4));
         vector-effect: non-scaling-stroke;
-      }
-      .verse-text {
-        font-family: 'Segoe UI', sans-serif;
-        font-size: 8px;
-        fill: #fff3e0;
-        text-anchor: middle;
-        dominant-baseline: middle;
-        font-weight: 300;
-        line-height: 1.4;
-      }
-      .verse-reference {
-        font-family: 'Segoe UI', sans-serif;
-        font-size: 6px;
-        font-weight: 500;
-        fill: #ffe0b2;
-        text-anchor: middle;
-        dominant-baseline: middle;
       }
       .bubble-decoration {
         fill: rgba(255, 224, 178, 0.2);
@@ -37,6 +25,4 @@
   <circle cx="95" cy="5" r="1.2" class="bubble-decoration"/>
   <circle cx="93" cy="15" r="0.8" class="bubble-decoration"/>
   <rect x="2" y="2" width="96" height="96" rx="5" ry="5" class="verse-background"/>
-  <text x="50" y="20" class="verse-reference">{{reference}}</text>
-  <text x="50" y="60" class="verse-text">{{text}}</text>
 </svg>

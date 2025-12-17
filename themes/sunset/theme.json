@@ -13,7 +13,7 @@
   },
   "input": {
     "template": "input.svg",
-    "position": { "x": "50%", "y": "35%" },
+    "position": { "x": "auto", "y": "35%" },
     "size": { "width": "60%", "height": "10%" },
     "enterClass": "fade-enter",
     "enterActiveClass": "fade-enter-active",
@@ -22,7 +22,7 @@
   },
   "verse": {
     "template": "verse.svg",
-    "position": { "x": "50%", "y": "65%" },
+    "position": { "x": "auto", "y": "65%" },
     "size": { "width": "80%", "height": "30%" },
     "enterClass": "fade-enter",
     "enterActiveClass": "fade-enter-active",
