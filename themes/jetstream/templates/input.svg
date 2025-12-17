@@ -1,0 +1,38 @@
+<svg width="{{width}}" height="{{height}}" viewBox="0 0 {{width}} {{height}}" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <style>
+      .input-background {
+        fill: rgba(10, 20, 40, 0.8);
+        stroke: #87ceeb;
+        stroke-width: 2;
+        rx: 12;
+        filter: drop-shadow(0 4px 12px rgba(135, 206, 235, 0.4));
+      }
+      .input-text {
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        font-size: 24px;
+        fill: #e6f3ff;
+        text-anchor: middle;
+        dominant-baseline: middle;
+        text-shadow: 0 2px 4px rgba(0, 0, 0, 0.6);
+        font-weight: 300;
+      }
+      .wind-lines {
+        stroke: rgba(135, 206, 235, 0.3);
+        stroke-width: 1;
+        fill: none;
+      }
+    </style>
+  </defs>
+
+  <!-- Wind flow lines -->
+  <path d="M 15 25 Q 50 20 85 25" class="wind-lines"/>
+  <path d="M 15 35 Q 60 30 85 35" class="wind-lines"/>
+  <path d="M 15 45 Q 45 40 85 45" class="wind-lines"/>
+
+  <!-- Main background -->
+  <rect x="10" y="10" width="{{innerWidth}}" height="{{innerHeight}}" class="input-background"/>
+
+  <!-- Text -->
+  <text x="{{centerX}}" y="{{centerY}}" class="input-text">{{text}}</text>
+</svg>

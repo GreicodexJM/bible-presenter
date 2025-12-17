@@ -1,0 +1,30 @@
+{
+  "name": "Jet Stream",
+  "background": {
+    "type": "shader",
+    "vertexShader": "jetstream.vert",
+    "fragmentShader": "jetstream.frag",
+    "uniforms": {
+      "time": { "type": "float", "value": 0.0 },
+      "resolution": { "type": "vec2", "value": [1920, 1080] }
+    },
+    "textures": [],
+    "animationClass": "atmospheric-flow"
+  },
+  "input": {
+    "template": "input.svg",
+    "position": { "x": "50%", "y": "35%" },
+    "size": { "width": "600px", "height": "80px" },
+    "animationClass": "wind-sweep"
+  },
+  "verse": {
+    "template": "verse.svg",
+    "position": { "x": "50%", "y": "65%" },
+    "size": { "width": "800px", "height": "200px" },
+    "animationClass": "current-flow"
+  },
+  "transitions": {
+    "fadeDuration": 1000,
+    "easing": "ease-in-out"
+  }
+}

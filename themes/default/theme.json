@@ -1,0 +1,30 @@
+{
+  "name": "Default",
+  "background": {
+    "type": "shader",
+    "vertexShader": "default.vert",
+    "fragmentShader": "default.frag",
+    "uniforms": {
+      "time": { "type": "float", "value": 0.0 },
+      "resolution": { "type": "vec2", "value": [1920, 1080] }
+    },
+    "textures": [],
+    "animationClass": "fade-in"
+  },
+  "input": {
+    "template": "input.svg",
+    "position": { "x": "50%", "y": "40%" },
+    "size": { "width": "600px", "height": "80px" },
+    "animationClass": "slide-up"
+  },
+  "verse": {
+    "template": "verse.svg",
+    "position": { "x": "50%", "y": "60%" },
+    "size": { "width": "800px", "height": "200px" },
+    "animationClass": "fade-in-scale"
+  },
+  "transitions": {
+    "fadeDuration": 500,
+    "easing": "ease-in-out"
+  }
+}

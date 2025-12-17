@@ -1,0 +1,30 @@
+{
+  "name": "Lake Reflection",
+  "background": {
+    "type": "shader",
+    "vertexShader": "lake.vert",
+    "fragmentShader": "lake.frag",
+    "uniforms": {
+      "time": { "type": "float", "value": 0.0 },
+      "resolution": { "type": "vec2", "value": [1920, 1080] }
+    },
+    "textures": [],
+    "animationClass": "water-ripple"
+  },
+  "input": {
+    "template": "input.svg",
+    "position": { "x": "50%", "y": "35%" },
+    "size": { "width": "600px", "height": "80px" },
+    "animationClass": "float-up"
+  },
+  "verse": {
+    "template": "verse.svg",
+    "position": { "x": "50%", "y": "65%" },
+    "size": { "width": "800px", "height": "200px" },
+    "animationClass": "water-surface"
+  },
+  "transitions": {
+    "fadeDuration": 800,
+    "easing": "ease-in-out"
+  }
+}

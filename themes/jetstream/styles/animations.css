@@ -1,0 +1,111 @@
+/* Jetstream-themed animation classes */
+
+.atmospheric-flow {
+  animation: atmosphericFlow 4s ease-in-out infinite;
+}
+
+.wind-sweep {
+  animation: windSweep 1.0s ease-out;
+}
+
+.current-flow {
+  animation: currentFlow 1.5s ease-out;
+}
+
+@keyframes atmosphericFlow {
+  0%, 100% {
+    transform: scale(1) rotate(0deg);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.01) rotate(0.5deg);
+    opacity: 0.98;
+  }
+}
+
+@keyframes windSweep {
+  from {
+    opacity: 0;
+    transform: translateX(-20px) translateY(-10px) scale(0.95);
+    filter: blur(1px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0) translateY(0) scale(1);
+    filter: blur(0px);
+  }
+}
+
+@keyframes currentFlow {
+  from {
+    opacity: 0;
+    transform: translateY(15px) scale(0.97);
+    filter: blur(2px);
+  }
+  60% {
+    opacity: 0.8;
+    transform: translateY(-3px) scale(1.01);
+    filter: blur(0.5px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    filter: blur(0px);
+  }
+}
+
+/* Additional atmospheric effects */
+.flowing-element {
+  position: relative;
+  overflow: hidden;
+}
+
+.flowing-element::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -120%;
+  width: 120%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(135, 206, 235, 0.1),
+    rgba(173, 216, 230, 0.2),
+    rgba(135, 206, 235, 0.1),
+    transparent
+  );
+  animation: atmosphericDrift 8s ease-in-out infinite;
+}
+
+@keyframes atmosphericDrift {
+  0% {
+    left: -120%;
+  }
+  50% {
+    left: 120%;
+  }
+  100% {
+    left: 120%;
+  }
+}
+
+/* Turbulence effect */
+.turbulent {
+  animation: turbulence 3s ease-in-out infinite;
+}
+
+@keyframes turbulence {
+  0%, 100% {
+    transform: translateX(0) translateY(0) rotate(0deg);
+  }
+  25% {
+    transform: translateX(1px) translateY(-1px) rotate(0.2deg);
+  }
+  50% {
+    transform: translateX(-1px) translateY(1px) rotate(-0.1deg);
+  }
+  75% {
+    transform: translateX(0.5px) translateY(-0.5px) rotate(0.1deg);
+  }
+}

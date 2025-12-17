@@ -1,0 +1,831 @@
+import * as THREE from 'three';
+
+// Theme configuration
+interface ThemeConfig {
+  name: string;
+  background: {
+    type: 'shader' | 'solid' | 'gradient' | 'texture';
+    vertexShader?: string;
+    fragmentShader?: string;
+    uniforms?: { [key: string]: { type: string; value: any } };
+    textures?: string[];
+    animationClass?: string;
+    skyColorTop?: string;
+    skyColorBottom?: string;
+    cloudColor?: string;
+    animationSpeed?: number;
+    gradientColors?: string[];
+    textureUrl?: string;
+    opacity?: number;
+  };
+  input: {
+    template: string;
+    position: { x: string; y: string };
+    size: { width: string; height: string };
+    animationClass?: string;
+  };
+  verse: {
+    template: string;
+    position: { x: string; y: string };
+    size: { width: string; height: string };
+    animationClass?: string;
+  };
+  transitions: {
+    fadeDuration: number;
+    easing: 'linear' | 'ease-in' | 'ease-out' | 'ease-in-out';
+  };
+}
+
+// Runtime theme object
+interface Theme {
+  config: ThemeConfig;
+  backgroundShaders?: {
+    vertex: string;
+    fragment: string;
+  };
+  inputTemplate?: string;
+  verseTemplate?: string;
+  styles?: string;
+}
+
+// Bible API interfaces
+interface BibleVerse {
+  book: string;
+  chapter: number;
+  verse: number;
+  text: string;
+}
+
+interface BibleAPIResponse {
+  reference: string;
+  verses: BibleVerse[];
+  text: string;
+  translation_id: string;
+  translation_name: string;
+  translation_note: string;
+}
+
+// Input state
+interface InputState {
+  mouse: {
+    x: number;
+    y: number;
+    buttons: boolean[];
+  };
+  keyboard: {
+    [key: string]: boolean;
+  };
+}
+
+// Bible service
+class BibleService {
+  private baseUrl = 'https://bible.helloao.org/api';
+  private translationData: any = null;
+
+  loadTranslation(data: any): void {
+    this.translationData = data;
+  }
+
+  async getVerse(book: string, chapter: number, verse: number): Promise<BibleAPIResponse | null> {
+    // Try local data first
+    if (this.translationData) {
+      const bookData = this.translationData.books[book.toUpperCase()];
+      if (bookData && bookData.chapters[chapter] && bookData.chapters[chapter][verse]) {
+        return {
+          reference: `${book.toUpperCase()} ${chapter}:${verse}`,
+          verses: [{
+            book: book.toUpperCase(),
+            chapter: chapter,
+            verse: verse,
+            text: bookData.chapters[chapter][verse]
+          }],
+          text: bookData.chapters[chapter][verse],
+          translation_id: this.translationData.metadata.abbreviation,
+          translation_name: this.translationData.metadata.name,
+          translation_note: this.translationData.metadata.description
+        };
+      }
+    }
+
+    // Fallback to API
+    try {
+      const response = await fetch(`${this.baseUrl}/${book}/${chapter}/${verse}`);
+      if (!response.ok) return null;
+      return await response.json();
+    } catch (error) {
+      console.error('Bible API error:', error);
+      return null;
+    }
+  }
+
+  parseReference(input: string): { book: string; chapter: number; verse: number } | null {
+    // Match patterns like "GEN 1:1", "gen 1:1", "Genesis 1:1", etc.
+    const match = input.trim().match(/^([A-Za-z\s]+)\s+(\d+):(\d+)$/);
+    if (!match) return null;
+
+    const [, book, chapter, verse] = match;
+    return {
+      book: book.trim(),
+      chapter: parseInt(chapter),
+      verse: parseInt(verse)
+    };
+  }
+}
+
+// Game state
+class Game3D {
+  private scene: THREE.Scene;
+  private camera: THREE.PerspectiveCamera;
+  private renderer: THREE.WebGLRenderer;
+  private input: InputState;
+  private animationId: number | null = null;
+
+  // Theme
+  private theme!: Theme;
+
+  // Bible functionality
+  private bibleService: BibleService;
+  private textInput: string = '';
+  private currentVerse: BibleAPIResponse | null = null;
+
+  // Cloud background
+  private shaderMaterial: THREE.ShaderMaterial | null = null;
+
+  // Text overlay elements
+  private textOverlay: HTMLDivElement | null = null;
+  private inputTextElement: HTMLDivElement | null = null;
+  private verseTextElement: HTMLDivElement | null = null;
+
+
+
+  constructor() {
+    this.scene = new THREE.Scene();
+    this.camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+    this.renderer = new THREE.WebGLRenderer({ antialias: true });
+    this.input = {
+      mouse: { x: 0, y: 0, buttons: [] },
+      keyboard: {}
+    };
+
+    this.bibleService = new BibleService();
+
+    // Load configuration and theme
+    this.loadConfiguration().then(() => {
+      this.init();
+      this.setupEventListeners();
+      this.createScene();
+      this.animate();
+    });
+  }
+
+  private async loadConfiguration(): Promise<void> {
+    try {
+      // Load main config
+      const configResponse = await fetch('/config.json');
+      const config = await configResponse.json();
+
+      // Load theme configuration
+      const themeResponse = await fetch(`/themes/${config.activeTheme}/theme.json`);
+      const themeConfig: ThemeConfig = await themeResponse.json();
+
+      // Load theme resources
+      const [vertexShader, fragmentShader, inputTemplate, verseTemplate, styles] = await Promise.all([
+        themeConfig.background.vertexShader ? fetch(`/themes/${config.activeTheme}/${themeConfig.background.vertexShader}`).then(r => r.text()) : Promise.resolve(''),
+        themeConfig.background.fragmentShader ? fetch(`/themes/${config.activeTheme}/${themeConfig.background.fragmentShader}`).then(r => r.text()) : Promise.resolve(''),
+        fetch(`/themes/${config.activeTheme}/templates/${themeConfig.input.template}`).then(r => r.text()),
+        fetch(`/themes/${config.activeTheme}/templates/${themeConfig.verse.template}`).then(r => r.text()),
+        fetch(`/themes/${config.activeTheme}/styles/animations.css`).then(r => r.text())
+      ]);
+
+      this.theme = {
+        config: themeConfig,
+        backgroundShaders: {
+          vertex: vertexShader,
+          fragment: fragmentShader
+        },
+        inputTemplate: inputTemplate,
+        verseTemplate: verseTemplate,
+        styles: styles
+      };
+
+      // Load translation data
+      const translationResponse = await fetch(`/translations/${config.activeTranslation}.json`);
+      this.bibleService.loadTranslation(await translationResponse.json());
+
+    } catch (error) {
+      console.error('Failed to load configuration:', error);
+      // Fallback to a basic default theme
+      const fallbackConfig: ThemeConfig = {
+        name: 'Default',
+        background: {
+          type: 'shader',
+          vertexShader: 'default.vert',
+          fragmentShader: 'default.frag',
+          uniforms: {
+            time: { type: 'float', value: 0.0 },
+            resolution: { type: 'vec2', value: [1920, 1080] }
+          }
+        },
+        input: {
+          template: 'input.svg',
+          position: { x: '50%', y: '40%' },
+          size: { width: '600px', height: '80px' }
+        },
+        verse: {
+          template: 'verse.svg',
+          position: { x: '50%', y: '60%' },
+          size: { width: '800px', height: '200px' }
+        },
+        transitions: {
+          fadeDuration: 500,
+          easing: 'ease-in-out'
+        }
+      };
+      this.theme = { config: fallbackConfig };
+    }
+  }
+
+  private init(): void {
+    // Setup renderer
+    this.renderer.setSize(window.innerWidth, window.innerHeight);
+    this.renderer.setClearColor(0x000011, 1);
+    document.getElementById('app')!.appendChild(this.renderer.domElement);
+
+    // Create overlay container for text elements
+    this.createTextOverlay();
+
+    // Setup camera
+    this.camera.position.z = 5;
+
+    // Handle window resize
+    window.addEventListener('resize', () => {
+      this.camera.aspect = window.innerWidth / window.innerHeight;
+      this.camera.updateProjectionMatrix();
+      this.renderer.setSize(window.innerWidth, window.innerHeight);
+    });
+  }
+
+  private createTextOverlay(): void {
+    // Create overlay container
+    this.textOverlay = document.createElement('div');
+    this.textOverlay.id = 'text-overlay';
+    this.textOverlay.style.cssText = `
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 10;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    `;
+
+    // Create input text element
+    this.inputTextElement = document.createElement('div');
+    this.inputTextElement.id = 'bible-input';
+    this.inputTextElement.style.cssText = `
+      position: absolute;
+      left: ${this.theme.config.input.position.x};
+      top: ${this.theme.config.input.position.y};
+      width: ${this.theme.config.input.size.width};
+      height: ${this.theme.config.input.size.height};
+      font-size: 24px;
+      color: #00ff00;
+      text-align: center;
+      white-space: pre-wrap;
+      display: none;
+      z-index: 11;
+    `;
+
+    // Create verse text element
+    this.verseTextElement = document.createElement('div');
+    this.verseTextElement.id = 'bible-verse';
+    this.verseTextElement.style.cssText = `
+      position: absolute;
+      left: ${this.theme.config.verse.position.x};
+      top: ${this.theme.config.verse.position.y};
+      width: ${this.theme.config.verse.size.width};
+      height: ${this.theme.config.verse.size.height};
+      font-size: 28px;
+      color: #ffffff;
+      text-align: center;
+      white-space: pre-wrap;
+      display: none;
+      z-index: 11;
+      line-height: 1.4;
+    `;
+
+    // Add elements to overlay
+    this.textOverlay.appendChild(this.inputTextElement);
+    this.textOverlay.appendChild(this.verseTextElement);
+
+    // Add overlay to app
+    document.getElementById('app')!.appendChild(this.textOverlay);
+  }
+
+
+
+  private setupEventListeners(): void {
+    // Mouse events
+    document.addEventListener('mousemove', (event) => {
+      this.input.mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+      this.input.mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+    });
+
+    document.addEventListener('mousedown', (event) => {
+      this.input.mouse.buttons[event.button] = true;
+    });
+
+    document.addEventListener('mouseup', (event) => {
+      this.input.mouse.buttons[event.button] = false;
+    });
+
+    // Keyboard events
+    document.addEventListener('keydown', (event) => {
+      this.input.keyboard[event.code] = true;
+    });
+
+    document.addEventListener('keyup', (event) => {
+      this.input.keyboard[event.code] = false;
+    });
+
+    // Prevent context menu
+    document.addEventListener('contextmenu', (event) => {
+      event.preventDefault();
+    });
+
+    // Pointer lock for immersive experience
+    document.addEventListener('click', () => {
+      document.body.requestPointerLock();
+    });
+  }
+
+  private createScene(): void {
+    // Add ambient light
+    const ambientLight = new THREE.AmbientLight(0x404040, 0.6);
+    this.scene.add(ambientLight);
+
+    // Add directional light
+    const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+    directionalLight.position.set(1, 1, 1);
+    this.scene.add(directionalLight);
+
+    // Create animated cloud background
+    this.createShaderBackground();
+  }
+
+  private createShaderBackground(): void {
+    if (this.theme.config.background.type !== 'shader') return;
+
+    // Use loaded shaders if available, otherwise fallback to inline shaders
+    const vertexShader = this.theme.backgroundShaders?.vertex || `
+      varying vec2 vUv;
+      void main() {
+        vUv = uv;
+        gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+      }
+    `;
+
+    // Convert Shadertoy fragment shader to WebGL compatible format
+    let fragmentShader = this.theme.backgroundShaders?.fragment || `
+      uniform float iTime;
+      uniform vec2 iResolution;
+      uniform vec2 iMouse;
+
+      // Test Shadertoy shader - Simple gradient
+      void mainImage(out vec4 fragColor, in vec2 fragCoord) {
+          vec2 uv = fragCoord / iResolution.xy;
+          vec3 col = vec3(uv.x, uv.y, 0.5);
+          fragColor = vec4(col, 1.0);
+      }
+
+      void main() {
+        mainImage(gl_FragColor, gl_FragCoord.xy);
+      }
+    `;
+
+    // Check if this is a Shadertoy-style shader (has mainImage function)
+    const hasMainImage = fragmentShader.includes('mainImage');
+
+    if (hasMainImage) {
+      // Convert Shadertoy shader to WebGL format
+      fragmentShader = this.convertShadertoyToWebGL(fragmentShader);
+    } else {
+      // Use as-is (already WebGL format)
+      fragmentShader = fragmentShader;
+    }
+
+    // Create shader material with Shadertoy-compatible uniforms
+    const shaderMaterial = new THREE.ShaderMaterial({
+      vertexShader: vertexShader,
+      fragmentShader: fragmentShader,
+      uniforms: {
+        iTime: { value: 0.0 },
+        iTimeDelta: { value: 0.016 },
+        iResolution: { value: new THREE.Vector3(window.innerWidth, window.innerHeight, 1.0) },
+        iMouse: { value: new THREE.Vector4(0, 0, 0, 0) },
+        iFrame: { value: 0 },
+        iFrameRate: { value: 60.0 },
+        iChannelTime: { value: [0.0, 0.0, 0.0, 0.0] },
+        iChannelResolution: { value: [
+          new THREE.Vector3(window.innerWidth, window.innerHeight, 1.0),
+          new THREE.Vector3(window.innerWidth, window.innerHeight, 1.0),
+          new THREE.Vector3(window.innerWidth, window.innerHeight, 1.0),
+          new THREE.Vector3(window.innerWidth, window.innerHeight, 1.0)
+        ] },
+        iDate: { value: new THREE.Vector4() },
+        iSampleRate: { value: 44100.0 }
+      },
+      side: THREE.BackSide
+    });
+
+    // Create large sphere for skybox
+    const skyGeometry = new THREE.SphereGeometry(100, 32, 32);
+    const skyMesh = new THREE.Mesh(skyGeometry, shaderMaterial);
+    this.scene.add(skyMesh);
+
+    // Store material reference for animation
+    this.shaderMaterial = shaderMaterial;
+
+    // Update resolution on window resize
+    window.addEventListener('resize', () => {
+      if (this.shaderMaterial) {
+        this.shaderMaterial.uniforms.iResolution.value.set(window.innerWidth, window.innerHeight);
+      }
+    });
+  }
+
+  private convertShadertoyToWebGL(shadertoyCode: string): string {
+    // Add Shadertoy uniforms at the top if not already present
+    let webGLShader = shadertoyCode;
+
+    // Ensure we have the standard Shadertoy uniforms
+    const uniforms = `
+uniform vec3 iResolution;
+uniform float iTime;
+uniform float iTimeDelta;
+uniform int iFrame;
+uniform float iFrameRate;
+uniform vec4 iMouse;
+uniform sampler2D iChannel0;
+uniform sampler2D iChannel1;
+uniform sampler2D iChannel2;
+uniform sampler2D iChannel3;
+uniform vec4 iDate;
+uniform float iSampleRate;
+`;
+
+    // Add uniforms if not already present
+    if (!webGLShader.includes('uniform vec3 iResolution;')) {
+      // Find the first non-comment, non-empty line after precision declarations
+      const lines = webGLShader.split('\n');
+      let insertIndex = 0;
+
+      for (let i = 0; i < lines.length; i++) {
+        const line = lines[i].trim();
+        if (line.startsWith('#') || line.startsWith('precision') || line === '') {
+          insertIndex = i + 1;
+        } else {
+          break;
+        }
+      }
+
+      lines.splice(insertIndex, 0, uniforms);
+      webGLShader = lines.join('\n');
+    }
+
+    // Ensure mainImage is called from main if not already done
+    if (!webGLShader.includes('void main()')) {
+      webGLShader += `
+
+void main() {
+    mainImage(gl_FragColor, gl_FragCoord.xy);
+}`;
+    }
+
+    return webGLShader;
+  }
+
+  private hexToRgb(hex: string): THREE.Vector3 {
+    const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+    return result ? new THREE.Vector3(
+      parseInt(result[1], 16) / 255,
+      parseInt(result[2], 16) / 255,
+      parseInt(result[3], 16) / 255
+    ) : new THREE.Vector3(1, 1, 1);
+  }
+
+  private lastTime: number = 0;
+
+  private animate = (): void => {
+    this.animationId = requestAnimationFrame(this.animate);
+
+    // Update cloud animation with Shadertoy-compatible uniforms
+    if (this.shaderMaterial) {
+      const now = performance.now();
+      const deltaTime = (now - this.lastTime) * 0.001; // Convert to seconds
+      this.lastTime = now;
+
+      this.shaderMaterial.uniforms.iTime.value = now * 0.001;
+      this.shaderMaterial.uniforms.iTimeDelta.value = deltaTime;
+      this.shaderMaterial.uniforms.iFrame.value++;
+      this.shaderMaterial.uniforms.iFrameRate.value = 60.0;
+
+      // Update mouse position (normalized 0-1)
+      this.shaderMaterial.uniforms.iMouse.value.set(
+        (this.input.mouse.x + 1) * 0.5 * window.innerWidth,
+        (1 - (this.input.mouse.y + 1) * 0.5) * window.innerHeight
+      );
+
+      // Update date (simplified)
+      const date = new Date();
+      this.shaderMaterial.uniforms.iDate.value.set(
+        date.getFullYear(),
+        date.getMonth(),
+        date.getDate(),
+        date.getHours() * 3600 + date.getMinutes() * 60 + date.getSeconds()
+      );
+
+      // Update channel times (for video textures, if any)
+      if (this.shaderMaterial.uniforms.iChannelTime) {
+        this.shaderMaterial.uniforms.iChannelTime.value[0] = now * 0.001;
+        this.shaderMaterial.uniforms.iChannelTime.value[1] = now * 0.001;
+        this.shaderMaterial.uniforms.iChannelTime.value[2] = now * 0.001;
+        this.shaderMaterial.uniforms.iChannelTime.value[3] = now * 0.001;
+      }
+
+      // Update channel resolutions (default values)
+      if (this.shaderMaterial.uniforms.iChannelResolution) {
+        const res = new THREE.Vector3(window.innerWidth, window.innerHeight, 1.0);
+        this.shaderMaterial.uniforms.iChannelResolution.value[0].copy(res);
+        this.shaderMaterial.uniforms.iChannelResolution.value[1].copy(res);
+        this.shaderMaterial.uniforms.iChannelResolution.value[2].copy(res);
+        this.shaderMaterial.uniforms.iChannelResolution.value[3].copy(res);
+      }
+
+      // Update sample rate (for audio, if any)
+      this.shaderMaterial.uniforms.iSampleRate.value = 44100.0;
+    }
+
+
+
+    // Handle input
+    this.handleInput();
+
+    // Render scene
+    this.renderer.render(this.scene, this.camera);
+  };
+
+  private handleInput(): void {
+    // Handle Bible input and navigation
+    this.handleBibleInput();
+
+    // Only handle movement if not showing verse (ignore mouse input as requested)
+    if (!this.currentVerse) {
+      const moveSpeed = 0.1;
+
+      // Keyboard movement (only when not in Bible mode)
+      if (this.input.keyboard['KeyW'] || this.input.keyboard['ArrowUp']) {
+        this.camera.position.z -= moveSpeed;
+      }
+      if (this.input.keyboard['KeyS'] || this.input.keyboard['ArrowDown']) {
+        this.camera.position.z += moveSpeed;
+      }
+      if (this.input.keyboard['KeyA'] || this.input.keyboard['ArrowLeft']) {
+        this.camera.position.x -= moveSpeed;
+      }
+      if (this.input.keyboard['KeyD'] || this.input.keyboard['ArrowRight']) {
+        this.camera.position.x += moveSpeed;
+      }
+    }
+  }
+
+  private handleBibleInput(): void {
+    // Check for key presses (only handle once per press)
+    const pressedKeys = Object.keys(this.input.keyboard).filter(key => this.input.keyboard[key]);
+
+    for (const keyCode of pressedKeys) {
+      // Only process if this is a new key press
+      if (this.input.keyboard[keyCode]) {
+        this.processBibleKey(keyCode);
+        // Mark as processed to avoid repeat
+        this.input.keyboard[keyCode] = false;
+      }
+    }
+  }
+
+  private processBibleKey(keyCode: string): void {
+    // Only accept specific keys for Bible input
+    const allowedKeys = [
+      'KeyA', 'KeyB', 'KeyC', 'KeyD', 'KeyE', 'KeyF', 'KeyG', 'KeyH', 'KeyI', 'KeyJ', 'KeyK', 'KeyL', 'KeyM',
+      'KeyN', 'KeyO', 'KeyP', 'KeyQ', 'KeyR', 'KeyS', 'KeyT', 'KeyU', 'KeyV', 'KeyW', 'KeyX', 'KeyY', 'KeyZ',
+      'Digit0', 'Digit1', 'Digit2', 'Digit3', 'Digit4', 'Digit5', 'Digit6', 'Digit7', 'Digit8', 'Digit9',
+      'Space', 'Semicolon', 'Enter', 'Backspace'
+    ];
+
+    if (!allowedKeys.includes(keyCode)) {
+      return;
+    }
+
+    // If showing a verse, handle navigation
+    if (this.currentVerse) {
+      this.handleVerseNavigation(keyCode);
+      return;
+    }
+
+    // Handle text input
+    if (keyCode === 'Enter') {
+      this.processBibleReference();
+    } else if (keyCode === 'Space') {
+      this.textInput += ' ';
+    } else if (keyCode === 'Semicolon') {
+      this.textInput += ':';
+    } else if (keyCode === 'Backspace') {
+      this.textInput = this.textInput.slice(0, -1);
+    } else if (keyCode.startsWith('Key')) {
+      const letter = keyCode.replace('Key', '').toLowerCase();
+      this.textInput += letter;
+    } else if (keyCode.startsWith('Digit')) {
+      const digit = keyCode.replace('Digit', '');
+      this.textInput += digit;
+    }
+
+    // Show input text
+    this.showInputText();
+  }
+
+  private handleVerseNavigation(keyCode: string): void {
+    if (!this.currentVerse || this.currentVerse.verses.length === 0) return;
+
+    const currentVerse = this.currentVerse.verses[0];
+    let newBook = currentVerse.book;
+    let newChapter = currentVerse.chapter;
+    let newVerse = currentVerse.verse;
+
+    switch (keyCode) {
+      case 'ArrowRight':
+      case 'ArrowDown':
+        newVerse++;
+        break;
+      case 'ArrowLeft':
+      case 'ArrowUp':
+        newVerse--;
+        break;
+    }
+
+    // Load new verse
+    this.loadVerse(newBook, newChapter, newVerse);
+  }
+
+  private async processBibleReference(): Promise<void> {
+    const reference = this.bibleService.parseReference(this.textInput);
+    if (reference) {
+      await this.loadVerse(reference.book, reference.chapter, reference.verse);
+    }
+
+    // Hide input text immediately (CSS transitions will handle animation)
+    this.hideInputText();
+    this.textInput = '';
+  }
+
+  private async loadVerse(book: string, chapter: number, verse: number): Promise<void> {
+    const verseData = await this.bibleService.getVerse(book, chapter, verse);
+    if (verseData) {
+      this.currentVerse = verseData;
+      this.fadeInVerseText();
+    } else {
+      this.hideVerseText();
+      this.currentVerse = null;
+    }
+  }
+
+  private showInputText(): void {
+    if (!this.inputTextElement || !this.theme.inputTemplate) return;
+
+    const displayText = this.textInput || 'Type a Bible reference (e.g., GEN 1:1)';
+
+    // Replace template variables in SVG
+    let svgContent = this.theme.inputTemplate
+      .replace(/\{\{text\}\}/g, this.escapeXml(displayText))
+      .replace(/\{\{width\}\}/g, this.theme.config.input.size.width)
+      .replace(/\{\{height\}\}/g, this.theme.config.input.size.height)
+      .replace(/\{\{innerWidth\}\}/g, (parseInt(this.theme.config.input.size.width) - 20).toString())
+      .replace(/\{\{innerHeight\}\}/g, (parseInt(this.theme.config.input.size.height) - 20).toString())
+      .replace(/\{\{centerX\}\}/g, (parseInt(this.theme.config.input.size.width) / 2).toString())
+      .replace(/\{\{centerY\}\}/g, (parseInt(this.theme.config.input.size.height) / 2).toString());
+
+    // Convert SVG to data URL for background image
+    const svgDataUrl = `data:image/svg+xml;base64,${btoa(svgContent)}`;
+
+    // Apply SVG as background image
+    this.inputTextElement.style.backgroundImage = `url("${svgDataUrl}")`;
+    this.inputTextElement.style.backgroundSize = 'contain';
+    this.inputTextElement.style.backgroundRepeat = 'no-repeat';
+    this.inputTextElement.style.backgroundPosition = 'center';
+
+    // Clear text content since we're using SVG background
+    this.inputTextElement.textContent = '';
+
+    // Apply theme animation class
+    if (this.theme.config.input.animationClass) {
+      this.inputTextElement.className = this.theme.config.input.animationClass;
+    }
+
+    // Position the element
+    this.inputTextElement.style.left = this.theme.config.input.position.x;
+    this.inputTextElement.style.top = this.theme.config.input.position.y;
+    this.inputTextElement.style.width = this.theme.config.input.size.width;
+    this.inputTextElement.style.height = this.theme.config.input.size.height;
+
+    this.inputTextElement.style.display = 'block';
+  }
+
+  private escapeXml(unsafe: string): string {
+    return unsafe.replace(/[<>&'"]/g, (c) => {
+      switch (c) {
+        case '<': return '<';
+        case '>': return '>';
+        case '&': return '&';
+        case "'": return '&#39;';
+        case '"': return '"';
+        default: return c;
+      }
+    });
+  }
+
+  private fadeInVerseText(): void {
+    if (!this.currentVerse || !this.verseTextElement || !this.theme.verseTemplate) return;
+
+    const reference = this.currentVerse.reference;
+    const text = this.currentVerse.text;
+
+    // Replace template variables in SVG
+    let svgContent = this.theme.verseTemplate
+      .replace(/\{\{reference\}\}/g, this.escapeXml(reference))
+      .replace(/\{\{text\}\}/g, this.escapeXml(text))
+      .replace(/\{\{width\}\}/g, this.theme.config.verse.size.width)
+      .replace(/\{\{height\}\}/g, this.theme.config.verse.size.height)
+      .replace(/\{\{innerWidth\}\}/g, (parseInt(this.theme.config.verse.size.width) - 40).toString())
+      .replace(/\{\{innerHeight\}\}/g, (parseInt(this.theme.config.verse.size.height) - 40).toString())
+      .replace(/\{\{centerX\}\}/g, (parseInt(this.theme.config.verse.size.width) / 2).toString())
+      .replace(/\{\{referenceY\}\}/g, '50')
+      .replace(/\{\{textY\}\}/g, '120');
+
+    // Convert SVG to data URL for background image
+    const svgDataUrl = `data:image/svg+xml;base64,${btoa(svgContent)}`;
+
+    // Apply SVG as background image
+    this.verseTextElement.style.backgroundImage = `url("${svgDataUrl}")`;
+    this.verseTextElement.style.backgroundSize = 'contain';
+    this.verseTextElement.style.backgroundRepeat = 'no-repeat';
+    this.verseTextElement.style.backgroundPosition = 'center';
+
+    // Clear text content since we're using SVG background
+    this.verseTextElement.textContent = '';
+
+    // Apply theme animation class
+    if (this.theme.config.verse.animationClass) {
+      this.verseTextElement.className = this.theme.config.verse.animationClass;
+    }
+
+    // Position the element
+    this.verseTextElement.style.left = this.theme.config.verse.position.x;
+    this.verseTextElement.style.top = this.theme.config.verse.position.y;
+    this.verseTextElement.style.width = this.theme.config.verse.size.width;
+    this.verseTextElement.style.height = this.theme.config.verse.size.height;
+
+    // Show immediately (CSS transitions will handle animation)
+    this.verseTextElement.style.display = 'block';
+  }
+
+  private hideInputText(): void {
+    if (this.inputTextElement) {
+      this.inputTextElement.style.display = 'none';
+    }
+  }
+
+
+  private hideVerseText(): void {
+    if (this.verseTextElement) {
+      this.verseTextElement.style.display = 'none';
+    }
+  }
+
+  public dispose(): void {
+    if (this.animationId) {
+      cancelAnimationFrame(this.animationId);
+    }
+    this.renderer.dispose();
+  }
+}
+
+// Initialize the game
+const game = new Game3D();
+
+// Cleanup on page unload
+window.addEventListener('beforeunload', () => {
+  game.dispose();
+});

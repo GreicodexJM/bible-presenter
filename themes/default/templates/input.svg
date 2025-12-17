@@ -1,0 +1,25 @@
+<svg width="{{width}}" height="{{height}}" viewBox="0 0 {{width}} {{height}}" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <style>
+      .input-background {
+        fill: rgba(0, 0, 0, 0.8);
+        stroke: #00ff00;
+        stroke-width: 2;
+        rx: 10;
+      }
+      .input-text {
+        font-family: Arial, sans-serif;
+        font-size: 24px;
+        fill: #00ff00;
+        text-anchor: middle;
+        dominant-baseline: middle;
+      }
+    </style>
+  </defs>
+
+  <!-- Background -->
+  <rect x="10" y="10" width="{{innerWidth}}" height="{{innerHeight}}" class="input-background"/>
+
+  <!-- Text -->
+  <text x="{{centerX}}" y="{{centerY}}" class="input-text">{{text}}</text>
+</svg>
