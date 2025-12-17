@@ -551,7 +551,7 @@ void main() {
 
   }
 
-  private handleVerseNavigation(keyCode: string): void {
+  private async handleVerseNavigation(keyCode: string): Promise<void> {
     if (!this.currentVerse || this.currentVerse.verses.length === 0) return;
 
     const currentVerse = this.currentVerse.verses[0];
@@ -571,13 +571,11 @@ void main() {
     }
 
     // Hide current verse with exit transition, then load new verse
-    this.hideVerseText();
+    await this.hideVerseText();
     this.currentVerse = null;
 
     // Load new verse after exit transition completes (0.8s)
-    setTimeout(() => {
-      this.loadVerse(newBook, newChapter, newVerse);
-    }, this.theme.config.transitions.animDuration);
+    await this.loadVerse(newBook, newChapter, newVerse);
   }
 
   private async processBibleReference(): Promise<void> {
@@ -660,18 +658,20 @@ void main() {
         requestAnimationFrame(() => {
           if (activeClass && element) {
             element.classList.add(activeClass);
+            // Resolve after transition completes
+            setTimeout(() => {
+              // For hide transitions, hide element after animation completes
+              if (!isShow && element) {
+                element.style.display = 'none';
+              }
+              resolve();
+            }, this.theme.config.transitions.animDuration);
+
           }
         });
       });
 
-      // Resolve after transition completes
-      setTimeout(() => {
-        // For hide transitions, hide element after animation completes
-        if (!isShow && element) {
-          element.style.display = 'none';
-        }
-        resolve();
-      }, this.theme.config.transitions.animDuration);
+
     });
   }
 

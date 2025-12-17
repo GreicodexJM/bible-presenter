@@ -20,8 +20,9 @@ export class BibleService {
             if (chapterData) {
               const verseData = chapterData.verses.find((v: any) => v.verse === verse);
               if (verseData) {
+                
                 return {
-                  reference: `${bookData.name} ${chapterData}:${verseData}`,
+                  reference: `${bookData.name} ${chapterData.chapter}:${verseData.verse}`,
                   verses: [{
                     book: bookData.name,
                     chapter: chapterData.chapter,
