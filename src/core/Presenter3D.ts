@@ -64,8 +64,8 @@ export class Presenter3D {
       const [vertexShader, fragmentShader, inputTemplate, verseTemplate, styles] = await Promise.all([
         themeConfig.background.vertexShader ? fetch(`/themes/${config.activeTheme}/${themeConfig.background.vertexShader}`).then(r => r.text()) : Promise.resolve(''),
         themeConfig.background.fragmentShader ? fetch(`/themes/${config.activeTheme}/${themeConfig.background.fragmentShader}`).then(r => r.text()) : Promise.resolve(''),
-        fetch(`/themes/${config.activeTheme}/templates/${themeConfig.input.template}`).then(r => r.text()),
-        fetch(`/themes/${config.activeTheme}/templates/${themeConfig.verse.template}`).then(r => r.text()),
+        fetch(`/themes/${config.activeTheme}/templates/${themeConfig.input.backgroundImage}`).then(r => r.text()),
+        fetch(`/themes/${config.activeTheme}/templates/${themeConfig.verse.backgroundImage}`).then(r => r.text()),
         fetch(`/themes/${config.activeTheme}/styles/animations.css`).then(r => r.text())
       ]);
 
@@ -139,12 +139,12 @@ export class Presenter3D {
           }
         },
         input: {
-          template: 'input.svg',
+          backgroundImage: 'input.svg',
           position: { x: '50%', y: '40%' },
           size: { width: '600px', height: '80px' }
         },
         verse: {
-          template: 'verse.svg',
+          backgroundImage: 'verse.svg',
           position: { x: '50%', y: '60%' },
           size: { width: '800px', height: '200px' }
         },
@@ -595,12 +595,12 @@ void main() {
   }
 
   private async loadVerse(book: string, chapter: number, verse: number): Promise<void> {
+    await this.hideVerseText();
     const verseData = await this.bibleService.getVerse(book, chapter, verse);
+    
     if (verseData) {
       this.currentVerse = verseData;
-      this.showVerseText();
-    } else {
-      this.hideVerseText();
+      await this.showVerseText();
     }
   }
 
@@ -639,7 +639,7 @@ void main() {
    * @param activeClass The active CSS class to add after initial class
    * @param isShow Whether this is a show transition (true) or hide transition (false)
    */
-  private applyTransition(element: HTMLElement | null, initialClass?: string, activeClass?: string, isShow: boolean = true): void {
+  private async applyTransition(element: HTMLElement | null, initialClass?: string, activeClass?: string, isShow: boolean = true): void {
     if (!element || !initialClass) {
       // Fallback if no transition classes defined
       if (!isShow && element) {
@@ -691,7 +691,7 @@ void main() {
     this.verseContainer.style.backgroundPosition = 'center';
 
     // Set text content in HTML element
-    this.verseTextElement.textContent = `${reference}\n\n${text}`;
+    this.verseTextElement.innerHTML = `<div class="reference">${reference}</div><div class="cite" >${text}</div>`;
 
     // Show both elements
     this.verseContainer.style.display = 'block';

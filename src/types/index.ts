@@ -19,7 +19,7 @@ export interface ThemeConfig {
     opacity?: number;
   };
   input: {
-    template: string;
+    backgroundImage: string;
     position: { x: string; y: string };
     size: { width: string; height: string };
     enterClass?: string;
@@ -28,7 +28,7 @@ export interface ThemeConfig {
     exitActiveClass?: string;
   };
   verse: {
-    template: string;
+    backgroundImage: string;
     position: { x: string; y: string };
     size: { width: string; height: string };
     enterClass?: string;

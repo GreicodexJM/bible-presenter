@@ -13,7 +13,7 @@
   },
   "input": {
     "backgroundImage": "input.svg",
-    "position": { "x": "50%", "y": "35%" },
+    "position": { "x": "auto", "y": "35%" },
     "size": { "width": "60%", "height": "10%" },
     "enterClass": "float-enter",
     "enterActiveClass": "float-enter-active",
@@ -22,7 +22,7 @@
   },
   "verse": {
     "backgroundImage": "verse.svg",
-    "position": { "x": "50%", "y": "65%" },
+    "position": { "x": "auto", "y": "65%" },
     "size": { "width": "80%", "height": "30%" },
     "enterClass": "water-enter",
     "enterActiveClass": "water-enter-active",

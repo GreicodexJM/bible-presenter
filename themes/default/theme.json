@@ -13,7 +13,7 @@
   },
   "input": {
     "backgroundImage": "input.svg",
-    "position": { "x": "", "y": "" },
+    "position": { "x": "auto", "y": "auto" },
     "size": { "width": "10vw", "height": "10vh" },
     "enterClass": "slide-enter",
     "enterActiveClass": "slide-enter-active",
@@ -22,7 +22,7 @@
   },
   "verse": {
     "backgroundImage": "verse.svg",
-    "position": { "x": "", "y": "" },
+    "position": { "x": "auto", "y": "auto" },
     "size": { "width": "100vw", "height": "100vw" },
     "enterClass": "fade-enter",
     "enterActiveClass": "fade-enter-active",
