@@ -740,7 +740,7 @@ void main() {
 
     // Apply SVG as background image
     this.inputContainer.style.backgroundImage = `url("${svgDataUrl}")`;
-    this.inputContainer.style.backgroundSize = 'contain';
+    this.inputContainer.style.backgroundSize = '100% 100%';
     this.inputContainer.style.backgroundRepeat = 'no-repeat';
     this.inputContainer.style.backgroundPosition = 'center';
 
@@ -814,9 +814,10 @@ void main() {
 
     // Apply SVG as background image to container
     this.verseContainer.style.backgroundImage = `url("${svgDataUrl}")`;
-    this.verseContainer.style.backgroundSize = 'contain';
+    this.verseContainer.style.backgroundSize = '100% 100%';
     this.verseContainer.style.backgroundRepeat = 'no-repeat';
     this.verseContainer.style.backgroundPosition = 'center';
+    this.verseContainer.style.padding='1em';
 
     // Set text content in HTML element
     this.verseTextElement.innerHTML = `<div class="reference">${reference}</div><div class="cite" >${text}</div>`;
