@@ -1,43 +1,11 @@
-import type { BibleAPIResponse, BibleVerse } from '../types';
+import type { BibleAPIResponse } from '../types';
 
 // Bible service
 export class BibleService {
   private translationData: any = null;
-  private allVersesIndex: { book: string, chapter: number, verse: number }[] = [];
-  private allRefsIndex: any = {};
+
   loadTranslation(data: any): void {
     this.translationData = data;
-    this.createIndex();
-  }
-  getBibleVerseHash(v: BibleVerse) {
-    return JSON.stringify({ book: v.book, chapter: v.chapter, verse: v.verse });
-  }
-  getVerseIndex(v:BibleVerse) {
-    return this.allRefsIndex[this.getBibleVerseHash(v)];
-  }
-  getIndexVerse(n:number) {
-    return this.allVersesIndex[n];
-  }
-  createIndex() {
-    this.allVersesIndex = [];
-    if (Array.isArray(this.translationData.books)) {
-      for (let bookIndex = 0; bookIndex < this.translationData.books.length; bookIndex++) {
-        const bookData = this.translationData.books[bookIndex];
-        for (let chapterIndex = 0; chapterIndex < bookData.chapters.length; chapterIndex++) {
-          const chapterData = bookData.chapters[chapterIndex];
-          for (let verseIndex = 0; verseIndex < chapterData.verses.length; verseIndex++) {
-            const verseData = chapterData.verses[verseIndex];
-            const idx = this.allVersesIndex.length;
-            this.allVersesIndex.push({
-              book: bookData.name,
-              chapter: chapterData.chapter,
-              verse: verseData.verse
-            });
-            this.allRefsIndex[JSON.stringify({ book: bookData.name, chapter: chapterData.chapter, verse: verseData.verse })] = idx;
-          }
-        }
-      }
-    }
   }
 
   async getVerse(book: string, chapter: number, verse: number): Promise<BibleAPIResponse | null> {
@@ -46,13 +14,13 @@ export class BibleService {
       if (this.translationData) {
         // Check for array-based structure (new format)
         if (Array.isArray(this.translationData.books)) {
-          const bookData = this.translationData.books.find((b: any) => b.name.toUpperCase().startsWith(book.toUpperCase()));
+          const bookData = this.translationData.books.find((b: any) => b.name.toUpperCase().startsWith(book.toUpperCase()) );
           if (bookData) {
             const chapterData = bookData.chapters.find((c: any) => c.chapter === chapter);
             if (chapterData) {
               const verseData = chapterData.verses.find((v: any) => v.verse === verse);
               if (verseData) {
-
+                
                 return {
                   reference: `${bookData.name} ${chapterData.chapter}:${verseData.verse}`,
                   verses: [{
@@ -69,7 +37,7 @@ export class BibleService {
               }
             }
           }
-        }
+        } 
         // Fallback to object-based structure (old format)
         else {
           const bookData = this.translationData.books[book.toUpperCase()];
@@ -104,8 +72,8 @@ export class BibleService {
     const [, book, chapter, verse] = match;
     return {
       book: book.trim(),
-      chapter: parseInt(chapter ?? 1),
-      verse: parseInt(verse ?? 1)
+      chapter: parseInt(chapter??1),
+      verse: parseInt(verse??1)
     };
   }
 }
