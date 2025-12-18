@@ -1,6 +1,8 @@
 import * as THREE from 'three';
 import type { ThemeConfig, Theme, InputState, BibleAPIResponse } from '../types';
 import { BibleService } from '../services/BibleService';
+import { SentimentAnalysisService } from '../services/SentimentAnalysisService';
+import { ThemeMappingService } from '../services/ThemeMappingService';
 
 // Game state
 export class Presenter3D {
@@ -12,9 +14,12 @@ export class Presenter3D {
 
   // Theme
   private theme!: Theme;
+  private config: any = null;
 
   // Bible functionality
   private bibleService: BibleService;
+  private sentimentAnalysisService: SentimentAnalysisService;
+  private themeMappingService: ThemeMappingService;
   private textInput: string = '';
   private currentVerse: BibleAPIResponse | null = null;
 
@@ -40,6 +45,8 @@ export class Presenter3D {
     };
 
     this.bibleService = new BibleService();
+    this.sentimentAnalysisService = new SentimentAnalysisService();
+    this.themeMappingService = new ThemeMappingService();
 
     // Load configuration and theme
     this.loadConfiguration().then(() => {
@@ -56,17 +63,23 @@ export class Presenter3D {
       const configResponse = await fetch('/config.json');
       const config = await configResponse.json();
 
+      // Store config for later use
+      this.config = config;
+
+      // Determine initial theme to load
+      const initialTheme = config.activeTheme === 'AUTO' ? 'default' : config.activeTheme;
+
       // Load theme configuration
-      const themeResponse = await fetch(`/themes/${config.activeTheme}/theme.json`);
+      const themeResponse = await fetch(`/themes/${initialTheme}/theme.json`);
       const themeConfig: ThemeConfig = await themeResponse.json();
 
       // Load theme resources
       const [vertexShader, fragmentShader, inputTemplate, verseTemplate, styles] = await Promise.all([
-        themeConfig.background.vertexShader ? fetch(`/themes/${config.activeTheme}/${themeConfig.background.vertexShader}`).then(r => r.text()) : Promise.resolve(''),
-        themeConfig.background.fragmentShader ? fetch(`/themes/${config.activeTheme}/${themeConfig.background.fragmentShader}`).then(r => r.text()) : Promise.resolve(''),
-        fetch(`/themes/${config.activeTheme}/templates/${themeConfig.input.backgroundImage}`).then(r => r.text()),
-        fetch(`/themes/${config.activeTheme}/templates/${themeConfig.verse.backgroundImage}`).then(r => r.text()),
-        fetch(`/themes/${config.activeTheme}/styles/animations.css`).then(r => r.text())
+        themeConfig.background.vertexShader ? fetch(`/themes/${initialTheme}/${themeConfig.background.vertexShader}`).then(r => r.text()) : Promise.resolve(''),
+        themeConfig.background.fragmentShader ? fetch(`/themes/${initialTheme}/${themeConfig.background.fragmentShader}`).then(r => r.text()) : Promise.resolve(''),
+        fetch(`/themes/${initialTheme}/templates/${themeConfig.input.backgroundImage}`).then(r => r.text()),
+        fetch(`/themes/${initialTheme}/templates/${themeConfig.verse.backgroundImage}`).then(r => r.text()),
+        fetch(`/themes/${initialTheme}/styles/animations.css`).then(r => r.text())
       ]);
 
       // Inject Styles
@@ -88,7 +101,7 @@ export class Presenter3D {
         const texturePromises = themeConfig.background.textures.map(textureFile => {
           return new Promise<THREE.Texture>((resolve, reject) => {
             textureLoader.load(
-              `/themes/${config.activeTheme}/images/${textureFile}`,
+              `/themes/${initialTheme}/images/${textureFile}`,
               (texture) => {
                 texture.wrapS = THREE.RepeatWrapping;
                 texture.wrapT = THREE.RepeatWrapping;
@@ -596,9 +609,119 @@ void main() {
 
     if (verseData) {
       this.currentVerse = verseData;
+
+      // Handle AUTO theme selection
+      if (this.config.activeTheme === 'AUTO') {
+        await this.selectThemeForVerse(verseData);
+      }
+
       return await this.showVerseText();
     }
     return await this.hideVerseText();
+  }
+
+  /**
+   * Analyzes verse content and selects an appropriate theme for AUTO mode
+   */
+  private async selectThemeForVerse(verseData: BibleAPIResponse): Promise<void> {
+    // Analyze the verse sentiment
+    const sentiment = this.sentimentAnalysisService.analyzeVerse(verseData.text);
+
+    // Create a unique key for this verse to enable caching
+    const verseKey = `${verseData.verses[0].book}-${verseData.verses[0].chapter}-${verseData.verses[0].verse}`;
+
+    // Map sentiment to theme with confidence consideration
+    const selectedTheme = this.themeMappingService.mapToneToThemeWithConfidence(
+      sentiment.primaryTone,
+      sentiment.confidence,
+      sentiment.secondaryTones,
+      verseKey
+    );
+
+    // Only switch themes if different from current
+    if (selectedTheme !== this.theme.config.name.toLowerCase()) {
+      await this.loadTheme(selectedTheme);
+    }
+  }
+
+  /**
+   * Dynamically loads a new theme
+   */
+  private async loadTheme(themeName: string): Promise<void> {
+    try {
+      // Load theme configuration
+      const themeResponse = await fetch(`/themes/${themeName}/theme.json`);
+      const themeConfig: ThemeConfig = await themeResponse.json();
+
+      // Load theme resources
+      const [vertexShader, fragmentShader, inputTemplate, verseTemplate, styles] = await Promise.all([
+        themeConfig.background.vertexShader ? fetch(`/themes/${themeName}/${themeConfig.background.vertexShader}`).then(r => r.text()) : Promise.resolve(''),
+        themeConfig.background.fragmentShader ? fetch(`/themes/${themeName}/${themeConfig.background.fragmentShader}`).then(r => r.text()) : Promise.resolve(''),
+        fetch(`/themes/${themeName}/templates/${themeConfig.input.backgroundImage}`).then(r => r.text()),
+        fetch(`/themes/${themeName}/templates/${themeConfig.verse.backgroundImage}`).then(r => r.text()),
+        fetch(`/themes/${themeName}/styles/animations.css`).then(r => r.text())
+      ]);
+
+      // Inject new styles
+      if (styles) {
+        const oldStyle = document.getElementById('theme-styles');
+        if (oldStyle) oldStyle.remove();
+
+        const styleEl = document.createElement('style');
+        styleEl.id = 'theme-styles';
+        styleEl.textContent = styles;
+        document.head.appendChild(styleEl);
+      }
+
+      // Load textures
+      const textureLoader = new THREE.TextureLoader();
+      const loadedTextures: THREE.Texture[] = [];
+
+      if (themeConfig.background.textures && themeConfig.background.textures.length > 0) {
+        const texturePromises = themeConfig.background.textures.map(textureFile => {
+          return new Promise<THREE.Texture>((resolve, reject) => {
+            textureLoader.load(
+              `/themes/${themeName}/images/${textureFile}`,
+              (texture) => {
+                texture.wrapS = THREE.RepeatWrapping;
+                texture.wrapT = THREE.RepeatWrapping;
+                resolve(texture);
+              },
+              undefined,
+              (err) => {
+                console.error(`Failed to load texture: ${textureFile}`, err);
+                reject(new THREE.Texture());
+              }
+            );
+          });
+        });
+
+        const textures = await Promise.all(texturePromises);
+        loadedTextures.push(...textures);
+      }
+
+      // Update theme
+      this.theme = {
+        config: themeConfig,
+        backgroundShaders: {
+          vertex: vertexShader,
+          fragment: fragmentShader
+        },
+        loadedTextures: loadedTextures,
+        inputTemplate: inputTemplate,
+        verseTemplate: verseTemplate,
+        styles: styles
+      };
+
+      // Update shader background with new theme
+      this.createShaderBackground();
+
+      console.log(`Switched to theme: ${themeName} (${themeConfig.name})`);
+
+    } catch (error) {
+      console.error(`Failed to load theme ${themeName}:`, error);
+      // Keep current theme on error
+    }
   }
 
   private async showInputText(): Promise<void> {
