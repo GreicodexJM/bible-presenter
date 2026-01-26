@@ -178,6 +178,7 @@ export class Presenter3D {
 
     // Create overlay container for text elements
     this.createTextOverlay();
+    this.createMobileControls();
 
     // Setup camera
     this.camera.position.z = 5;
@@ -188,6 +189,117 @@ export class Presenter3D {
       this.camera.updateProjectionMatrix();
       this.renderer.setSize(window.innerWidth, window.innerHeight);
     });
+  }
+
+  private createMobileControls(): void {
+    const controlsContainer = document.createElement('div');
+    controlsContainer.id = 'mobile-controls';
+    controlsContainer.style.cssText = `
+      position: absolute;
+      bottom: 20px;
+      left: 0;
+      width: 100%;
+      display: flex;
+      justify-content: center;
+      gap: 30px;
+      z-index: 20;
+      pointer-events: none;
+    `;
+
+    const buttonStyle = `
+      width: 60px;
+      height: 60px;
+      background: rgba(255, 255, 255, 0.15);
+      border-radius: 50%;
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      pointer-events: auto;
+      backdrop-filter: blur(4px);
+      -webkit-backdrop-filter: blur(4px);
+      transition: background 0.2s;
+    `;
+
+    const createButton = (svgPath: string, onClick: () => void) => {
+      const btn = document.createElement('div');
+      btn.innerHTML = `<svg viewBox="0 0 24 24" width="32" height="32" fill="rgba(255, 255, 255, 0.9)"><path d="${svgPath}"/></svg>`;
+      btn.style.cssText = buttonStyle;
+
+      const handleInteraction = (e: Event) => {
+        if (e.type === 'touchstart') e.preventDefault();
+        onClick();
+      };
+      
+      btn.addEventListener('click', handleInteraction);
+      btn.addEventListener('touchstart', handleInteraction, { passive: false });
+
+      // Add simple hover/active effect
+      btn.addEventListener('mousedown', () => btn.style.background = 'rgba(255, 255, 255, 0.3)');
+      btn.addEventListener('mouseup', () => btn.style.background = 'rgba(255, 255, 255, 0.15)');
+      btn.addEventListener('mouseleave', () => btn.style.background = 'rgba(255, 255, 255, 0.15)');
+      btn.addEventListener('touchstart', () => btn.style.background = 'rgba(255, 255, 255, 0.3)', { passive: true });
+      btn.addEventListener('touchend', () => btn.style.background = 'rgba(255, 255, 255, 0.15)');
+      
+      return btn;
+    };
+
+    // Previous Button
+    const prevBtn = createButton(
+      'M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z',
+      () => this.handleVerseNavigation('ArrowLeft')
+    );
+    
+    // Search/Input Button
+    const searchBtn = createButton(
+      'M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z',
+      () => {
+        this.showInputText();
+        // Give time for display:block to happen before focusing
+        setTimeout(() => {
+          if (this.inputTextElement) {
+            this.inputTextElement.focus();
+            // Try to trigger mobile keyboard explicitly
+            this.inputTextElement.click(); 
+          }
+        }, 50);
+      }
+    );
+
+    // Next Button
+    const nextBtn = createButton(
+      'M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z',
+      () => this.handleVerseNavigation('ArrowRight')
+    );
+
+    controlsContainer.appendChild(prevBtn);
+    controlsContainer.appendChild(searchBtn);
+    controlsContainer.appendChild(nextBtn);
+
+    document.getElementById('app')!.appendChild(controlsContainer);
+
+    // Auto-hide logic for desktop (devices with hover capability)
+    const hasHover = window.matchMedia('(hover: hover)').matches;
+    
+    if (hasHover) {
+      controlsContainer.style.opacity = '0';
+      controlsContainer.style.transition = 'opacity 0.3s ease-in-out';
+      
+      let hideTimeout: number;
+      
+      const showControls = () => {
+        controlsContainer.style.opacity = '1';
+        window.clearTimeout(hideTimeout);
+        hideTimeout = window.setTimeout(() => {
+          controlsContainer.style.opacity = '0';
+        }, 3000);
+      };
+
+      document.addEventListener('mousemove', showControls);
+      document.addEventListener('mousedown', showControls);
+      document.addEventListener('keydown', showControls);
+    }
   }
 
   private createTextOverlay(): void {
